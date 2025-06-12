@@ -68,7 +68,7 @@ export function TrendingWidget({
         {trendingPosts.map((post, index) => (
           <div key={post.id} className="group">
             <Link href={`/news/${post.slug}`}>
-              <div className="flex items-start space-x-3 p-2 -m-2 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex items-start space-x-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors">
                 {/* Trending Number/Icon */}
                 <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                   {getTrendingIcon(index)}
@@ -78,7 +78,7 @@ export function TrendingWidget({
                 <div className="flex-1 min-w-0">
                   <h4
                     className={cn(
-                      "font-medium text-sm line-clamp-2 group-hover:text-blue-700 transition-colors",
+                      "font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors",
                       getTrendingColor(index)
                     )}
                   >
@@ -122,10 +122,10 @@ export function TrendingWidget({
         ))}
 
         {/* View All Link */}
-        <div className="pt-3 border-t border-gray-200">
+        <div className="pt-3 border-t border-border">
           <Link
             href="/trending"
-            className="block text-center text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors"
+            className="block text-center text-sm font-medium text-primary hover:text-blue-700 transition-colors"
           >
             View All Trending →
           </Link>
@@ -135,34 +135,84 @@ export function TrendingWidget({
   );
 }
 
-// Quick Stats Widget
+// Enhanced Quick Stats Widget
 export function QuickStatsWidget({ className }: { className?: string }) {
   const stats = [
-    { label: "Breaking News", value: "3", color: "text-red-600" },
-    { label: "Stories Today", value: "47", color: "text-blue-600" },
-    { label: "Active Readers", value: "12.5K", color: "text-green-600" },
+    {
+      label: "Breaking News",
+      value: "3",
+      color: "text-red-600",
+      bgColor: "bg-gradient-to-r from-red-50 to-red-100",
+      icon: "🚨",
+    },
+    {
+      label: "Stories Today",
+      value: "47",
+      color: "text-blue-600",
+      bgColor: "bg-gradient-to-r from-blue-50 to-blue-100",
+      icon: "📰",
+    },
+    {
+      label: "Active Readers",
+      value: "12.5K",
+      color: "text-green-600",
+      bgColor: "bg-gradient-to-r from-green-50 to-green-100",
+      icon: "👥",
+    },
   ];
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Live Stats</CardTitle>
-      </CardHeader>
+    <div className={cn("p-8", className)}>
+      <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-8 pb-4 border-b border-gray-200">
+        📊 Live Stats
+      </h3>
 
-      <CardContent>
-        <div className="grid grid-cols-1 gap-4">
-          {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className={cn("text-2xl font-bold", stat.color)}>
-                {stat.value}
-              </div>
-              <div className="text-xs text-gray-500 uppercase tracking-wide">
-                {stat.label}
+      <div className="space-y-6">
+        {stats.map((stat, index) => (
+          <div
+            key={index}
+            className={cn(
+              "flex items-center justify-between p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100",
+              stat.bgColor
+            )}
+          >
+            <div className="flex items-center space-x-4">
+              <div className="text-2xl">{stat.icon}</div>
+              <div>
+                <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide block">
+                  {stat.label}
+                </span>
+                <div className={cn("text-2xl font-bold", stat.color)}>
+                  {stat.value}
+                </div>
               </div>
             </div>
-          ))}
+            <div className="text-gray-400">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
+              </svg>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Live indicator */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>Live updates every 30 seconds</span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

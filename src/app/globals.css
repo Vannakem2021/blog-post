@@ -1,33 +1,41 @@
 @import "tailwindcss";
 
 :root {
+  /* Core Colors - Consistent palette for the entire application */
   --background: #ffffff;
-  --foreground: #0f172a;
-  --primary: #1e3a8a;
+  --foreground: #1e293b;
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
+  --secondary: #f8fafc;
   --secondary-foreground: #1e293b;
-  --muted: #f8fafc;
-  --muted-foreground: #475569;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
   --accent: #e2e8f0;
   --accent-foreground: #1e293b;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #d1d5db;
-  --input: #e5e7eb;
-  --ring: #1d4ed8;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --input-border: #d1d5db;
+  --ring: #2563eb;
   --card: #ffffff;
-  --card-foreground: #0f172a;
-  --news-gray-50: #f9fafb;
-  --news-gray-100: #f3f4f6;
-  --news-gray-200: #e5e7eb;
-  --news-gray-300: #d1d5db;
-  --news-gray-400: #9ca3af;
-  --news-gray-500: #6b7280;
-  --news-gray-600: #455160;
-  --news-gray-700: #374151;
-  --news-gray-800: #1f2937;
-  --news-gray-900: #111827;
+  --card-foreground: #1e293b;
+
+  /* Consistent Gray Scale - Single source of truth */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
 }
 
 @theme inline {
@@ -43,70 +51,43 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-input-border: var(--input-border);
   --color-ring: var(--ring);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --font-sans: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-news-gray-50: var(--news-gray-50);
-  --color-news-gray-100: var(--news-gray-100);
-  --color-news-gray-200: var(--news-gray-200);
-  --color-news-gray-300: var(--news-gray-300);
-  --color-news-gray-400: var(--news-gray-400);
-  --color-news-gray-500: var(--news-gray-500);
-  --color-news-gray-600: var(--news-gray-600);
-  --color-news-gray-700: var(--news-gray-700);
-  --color-news-gray-800: var(--news-gray-800);
-  --color-news-gray-900: var(--news-gray-900);
+
+  /* Consistent Gray Scale */
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --primary: #93c5fd;
-    --primary-foreground: #111827;
-    --secondary: #1e293b;
-    --secondary-foreground: #f1f5f9;
-    --muted: #1e293b;
-    --muted-foreground: #cbd5e1;
-    --accent: #334155;
-    --accent-foreground: #f1f5f9;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: #475569;
-    --input: #374151;
-    --ring: #3b82f6;
-    --card: #1e293b;
-    --card-foreground: #f8fafc;
-    --news-gray-50: #1e293b;
-    --news-gray-100: #334155;
-    --news-gray-200: #475569;
-    --news-gray-300: #64748b;
-    --news-gray-400: #94a3b8;
-    --news-gray-500: #cbd5e1;
-    --news-gray-600: #e2e8f0;
-    --news-gray-700: #f1f5f9;
-    --news-gray-800: #f8fafc;
-    --news-gray-900: #ffffff;
-  }
-}
+/* Removed dark mode styles to ensure consistent white backgrounds */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-mono), "Courier New", monospace;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
   font-weight: 400;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    color: var(--foreground);
-    border-color: var(--border);
-  }
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Utility classes for line clamping */
@@ -134,27 +115,41 @@ body {
   line-clamp: 3;
 }
 
-/* Accessibility improvements */
-.text-high-contrast {
-  color: var(--news-gray-900);
+/* Accessibility improvements - WCAG compliant contrast ratios */
+.text-high-emphasis {
+  color: var(--gray-900);
 }
 
-.text-medium-contrast {
-  color: var(--news-gray-700);
+.text-medium-emphasis {
+  color: var(--gray-700);
 }
 
-.text-low-contrast {
-  color: var(--news-gray-600);
+.text-low-emphasis {
+  color: var(--gray-600);
 }
 
 .bg-high-contrast {
-  background-color: var(--news-gray-900);
-  color: var(--news-gray-50);
+  background-color: var(--gray-900);
+  color: var(--gray-50);
 }
 
 .bg-medium-contrast {
-  background-color: var(--news-gray-100);
-  color: var(--news-gray-900);
+  background-color: var(--gray-100);
+  color: var(--gray-900);
+}
+
+/* Enhanced card styles - Simplified and consistent */
+.card-elevated {
+  background: var(--card);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease-in-out;
+}
+
+.card-elevated:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
+  border-color: var(--gray-300);
 }
 
 /* Focus states for better accessibility */
@@ -178,4 +173,67 @@ a:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Modern spacing utilities */
+.space-y-16 > * + * {
+  margin-top: 4rem;
+}
+
+.space-y-12 > * + * {
+  margin-top: 3rem;
+}
+
+.space-y-8 > * + * {
+  margin-top: 2rem;
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+/* Enhanced typography */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Smooth transitions for all interactive elements */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Modern card shadows - Enhanced for better depth */
+.shadow-card {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.shadow-card-hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.shadow-card-elevated {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Consistent shadow utilities */
+.shadow-subtle {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.shadow-soft {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.shadow-medium {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.shadow-large {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Improved focus states */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }

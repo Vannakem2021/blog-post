@@ -73,28 +73,28 @@ export function BreakingNewsBanner({
   return (
     <div
       className={cn(
-        "bg-red-700 text-white relative overflow-hidden border-b-2 border-red-800",
+        "bg-destructive text-destructive-foreground relative overflow-hidden border-b border-red-800 shadow-sm",
         className
       )}
     >
       {/* Animated background pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent animate-pulse" />
       </div>
 
-      <div className="relative px-4 py-3">
+      <div className="relative px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Breaking News Label */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            <div className="bg-white text-red-800 px-3 py-1 rounded-md font-bold text-sm uppercase tracking-wide shadow-sm">
+          <div className="flex items-center space-x-4 flex-shrink-0">
+            <div className="bg-background text-destructive px-4 py-1.5 rounded-lg font-bold text-sm uppercase tracking-wide shadow-md">
               Breaking
             </div>
-            <div className="hidden sm:block w-2 h-2 bg-white rounded-full animate-pulse" />
+            <div className="hidden sm:block w-2.5 h-2.5 bg-background rounded-full animate-pulse" />
           </div>
 
           {/* Story Content */}
           <div
-            className="flex-1 mx-4 min-w-0"
+            className="flex-1 mx-6 min-w-0"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >

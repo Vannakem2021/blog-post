@@ -1,22 +1,18 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { formatDate } from '@/lib/utils'
-import { BlogPost } from '@/lib/types'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import {
-  PencilIcon,
-  TrashIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline'
+import Link from "next/link";
+import { formatDate } from "@/lib/utils";
+import { BlogPost } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 
 interface PostListProps {
-  posts: BlogPost[]
-  onEdit?: (post: BlogPost) => void
-  onDelete?: (post: BlogPost) => void
-  onView?: (post: BlogPost) => void
+  posts: BlogPost[];
+  onEdit?: (post: BlogPost) => void;
+  onDelete?: (post: BlogPost) => void;
+  onView?: (post: BlogPost) => void;
 }
 
 export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
@@ -25,15 +21,19 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
           <div className="text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
-            <p className="text-gray-500 mb-4">Get started by creating your first blog post.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No posts found
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Get started by creating your first blog post.
+            </p>
             <Link href="/dashboard/posts/new">
               <Button>Create New Post</Button>
             </Link>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -48,7 +48,9 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
                     {post.title}
                   </h3>
                   <Badge
-                    variant={post.status === 'published' ? 'default' : 'secondary'}
+                    variant={
+                      post.status === "published" ? "default" : "secondary"
+                    }
                   >
                     {post.status}
                   </Badge>
@@ -59,17 +61,17 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
                   </p>
                 )}
                 <div className="flex items-center text-sm text-gray-500 space-x-4">
-                  <span>Created: {formatDate(post.createdAt)}</span>
-                  {post.publishedAt && (
-                    <span>Published: {formatDate(post.publishedAt)}</span>
+                  <span>Created: {formatDate(post.created_at)}</span>
+                  {post.published_at && (
+                    <span>Published: {formatDate(post.published_at)}</span>
                   )}
                 </div>
               </div>
-              {post.featuredImageUrl && (
+              {post.featured_image_url && (
                 <div className="ml-4 flex-shrink-0">
                   <img
-                    src={post.featuredImageUrl}
-                    alt={post.featuredImageAlt || post.title}
+                    src={post.featured_image_url}
+                    alt={post.featured_image_alt || post.title}
                     className="w-20 h-20 object-cover rounded-lg"
                   />
                 </div>
@@ -80,7 +82,8 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">
-                  Slug: <code className="bg-gray-100 px-1 rounded">{post.slug}</code>
+                  Slug:{" "}
+                  <code className="bg-gray-100 px-1 rounded">{post.slug}</code>
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -120,5 +123,5 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
         </Card>
       ))}
     </div>
-  )
+  );
 }

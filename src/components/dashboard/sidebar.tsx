@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth/context";
 import { cn } from "@/lib/utils";
 import {
   HomeIcon,
@@ -24,6 +25,12 @@ interface SidebarProps {
 
 export function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  // Get user initials for avatar
+  const getUserInitials = (email: string) => {
+    return email.charAt(0).toUpperCase();
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -66,12 +73,18 @@ export function Sidebar({ onLogout }: SidebarProps) {
         <div className="flex items-center">
           <div className="flex-shrink-0">
             <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-white">A</span>
+              <span className="text-sm font-medium text-white">
+                {user?.email ? getUserInitials(user.email) : "A"}
+              </span>
             </div>
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium text-white">Admin User</p>
-            <p className="text-xs text-gray-300">admin@example.com</p>
+            <p className="text-sm font-medium text-white">
+              {user?.role === "admin" ? "Admin User" : "User"}
+            </p>
+            <p className="text-xs text-gray-300">
+              {user?.email || "admin@example.com"}
+            </p>
           </div>
         </div>
         {onLogout && (

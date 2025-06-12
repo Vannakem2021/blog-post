@@ -61,7 +61,7 @@ export const mockBreakingNews: BreakingNews[] = [
       "Revolutionary advancement in artificial intelligence promises to transform multiple industries",
     url: "/technology/ai-breakthrough-announcement",
     timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    isActive: true,
+    is_active: true,
     priority: 1,
   },
   {
@@ -71,7 +71,7 @@ export const mockBreakingNews: BreakingNews[] = [
       "World leaders commit to ambitious new targets for carbon reduction",
     url: "/world/climate-summit-agreement",
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    isActive: true,
+    is_active: true,
     priority: 2,
   },
 ];
@@ -273,23 +273,51 @@ export const getTrendingPosts = () =>
 export const getAuthorById = (id: string) =>
   mockAuthors.find((author) => author.id === id);
 
-// News categories for navigation
+// News categories for navigation - Updated with consistent, accessible colors
 export const newsCategories = [
-  { name: "Politics", slug: "politics", color: "bg-red-100 text-red-800" },
-  { name: "Business", slug: "business", color: "bg-green-100 text-green-800" },
+  {
+    name: "Politics",
+    slug: "politics",
+    color: "bg-red-50 text-red-700 border-red-200",
+  },
+  {
+    name: "Business",
+    slug: "business",
+    color: "bg-green-50 text-green-700 border-green-200",
+  },
   {
     name: "Technology",
     slug: "technology",
-    color: "bg-blue-100 text-blue-800",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
   },
-  { name: "Sports", slug: "sports", color: "bg-orange-100 text-orange-800" },
-  { name: "World", slug: "world", color: "bg-purple-100 text-purple-800" },
-  { name: "Health", slug: "health", color: "bg-pink-100 text-pink-800" },
-  { name: "Local", slug: "local", color: "bg-yellow-100 text-yellow-800" },
-  { name: "Opinion", slug: "opinion", color: "bg-gray-100 text-gray-800" },
+  {
+    name: "Sports",
+    slug: "sports",
+    color: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+  {
+    name: "World",
+    slug: "world",
+    color: "bg-purple-50 text-purple-700 border-purple-200",
+  },
+  {
+    name: "Health",
+    slug: "health",
+    color: "bg-pink-50 text-pink-700 border-pink-200",
+  },
+  {
+    name: "Local",
+    slug: "local",
+    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  },
+  {
+    name: "Opinion",
+    slug: "opinion",
+    color: "bg-gray-50 text-gray-700 border-gray-200",
+  },
   {
     name: "Entertainment",
     slug: "entertainment",
-    color: "bg-indigo-100 text-indigo-800",
+    color: "bg-indigo-50 text-indigo-700 border-indigo-200",
   },
 ];

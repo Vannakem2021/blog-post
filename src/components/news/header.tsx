@@ -11,9 +11,12 @@ import {
   MagnifyingGlassIcon,
   BellIcon,
   ClockIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 import { newsCategories } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth/context";
 
 interface NewsHeaderProps {
   hasBreakingNews?: boolean;
@@ -23,6 +26,7 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, isAdmin, signOut } = useAuth();
 
   const currentTime = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -41,92 +45,59 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-      {/* Top Bar with Time and Breaking News Indicator */}
-      <div className="bg-gray-100 border-b border-gray-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-8 text-xs">
-            <div className="flex items-center space-x-4 text-gray-700">
-              <div className="flex items-center space-x-1">
-                <ClockIcon className="h-3 w-3" />
-                <span className="font-medium">{currentTime}</span>
+    <header className="bg-white/95 border-b border-gray-100 sticky top-0 z-40 backdrop-blur-sm">
+      {/* Simplified Top Bar */}
+      {hasBreakingNews && (
+        <div className="bg-red-600 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center h-8 text-xs">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                <span className="font-semibold">Breaking News</span>
+                <BellIcon className="h-3.5 w-3.5" />
               </div>
-              <span>•</span>
-              <span className="font-medium">Latest News</span>
             </div>
-
-            {hasBreakingNews && (
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                <span className="text-red-700 font-bold">Breaking News</span>
-                <BellIcon className="h-3 w-3 text-red-700" />
-              </div>
-            )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Navigation */}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">NewsHub</h1>
-              <Badge
-                variant="outline"
-                className="ml-2 text-xs border-gray-400 text-gray-700"
-              >
-                Live
-              </Badge>
+            <Link href="/" className="flex items-center group">
+              <h1 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                NewsHub
+              </h1>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {newsCategories.slice(0, 6).map((category) => (
+          <div className="hidden lg:flex items-center space-x-8">
+            {newsCategories.slice(0, 5).map((category) => (
               <Link
                 key={category.slug}
                 href={`/${category.slug}`}
-                className="px-3 py-2 text-sm font-medium text-gray-800 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 {category.name}
               </Link>
             ))}
-
-            {/* More dropdown for additional categories */}
-            <div className="relative group">
-              <button className="px-3 py-2 text-sm font-medium text-gray-800 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">
-                More
-              </button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <div className="py-1">
-                  {newsCategories.slice(6).map((category) => (
-                    <Link
-                      key={category.slug}
-                      href={`/${category.slug}`}
-                      className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 hover:text-gray-900"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Search and Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             {/* Search */}
-            <div className="relative">
+            <div className="relative hidden sm:block">
               {searchOpen ? (
                 <form onSubmit={handleSearch} className="flex items-center">
                   <Input
                     type="text"
-                    placeholder="Search news..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pr-10"
+                    className="w-64 pr-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     autoFocus
                   />
                   <button
@@ -142,26 +113,52 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setSearchOpen(true)}
-                  className="hidden sm:flex"
+                  className="text-gray-500 hover:text-gray-700"
                 >
                   <MagnifyingGlassIcon className="h-5 w-5" />
                 </Button>
               )}
             </div>
 
-            {/* Admin Link */}
-            <Link href="/dashboard" className="hidden sm:block">
-              <Button variant="outline" size="sm">
-                Admin
-              </Button>
-            </Link>
+            {/* Authentication */}
+            {user && isAdmin ? (
+              <div className="hidden sm:flex items-center space-x-3">
+                <Link href="/dashboard">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Link href="/auth/login" className="hidden sm:block">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                >
+                  Admin Login
+                </Button>
+              </Link>
+            )}
 
             {/* Mobile menu button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden"
+              className="lg:hidden text-gray-500 hover:text-gray-700"
             >
               {mobileMenuOpen ? (
                 <XMarkIcon className="h-6 w-6" />

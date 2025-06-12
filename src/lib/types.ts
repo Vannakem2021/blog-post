@@ -4,22 +4,27 @@ export interface BlogPost {
   slug: string;
   content: string;
   excerpt?: string;
-  featuredImageUrl?: string;
-  featuredImageAlt?: string;
+  featured_image_url?: string;
+  featured_image_alt?: string;
   status: "draft" | "published";
-  publishedAt?: Date | string;
-  authorId: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  published_at?: Date | string;
+  author_id: string;
+  created_at: Date | string;
+  updated_at: Date | string;
   // News-specific fields
   category: NewsCategory;
-  urgencyLevel: "breaking" | "urgent" | "normal";
-  readingTime?: number;
-  sourceAttribution?: string[];
-  isBreaking?: boolean;
-  isFeatured?: boolean;
-  viewCount?: number;
-  shareCount?: number;
+  urgency_level: "breaking" | "urgent" | "normal";
+  reading_time?: number;
+  source_attribution?: string[];
+  is_breaking?: boolean;
+  is_featured?: boolean;
+  view_count?: number;
+  share_count?: number;
+  // Profile relation (when joined)
+  profiles?: {
+    full_name?: string;
+    email: string;
+  };
 }
 
 export type NewsCategory =
@@ -39,42 +44,59 @@ export interface BreakingNews {
   summary: string;
   url: string;
   timestamp: Date | string;
-  isActive: boolean;
+  is_active: boolean;
   priority: number;
 }
 
 export interface Profile {
   id: string;
   email: string;
-  fullName?: string;
-  avatarUrl?: string;
+  full_name?: string;
+  avatar_url?: string;
   role: "admin" | "user";
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  created_at: Date | string;
+  updated_at: Date | string;
   // News author fields
   bio?: string;
   title?: string;
-  socialLinks?: {
+  social_links?: {
     twitter?: string;
     linkedin?: string;
   };
 }
 
+// Supabase Auth Types
+export interface AuthUser {
+  id: string;
+  email: string;
+  role?: string;
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  loading: boolean;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
 export interface PostImage {
   id: string;
-  postId: string;
-  imageUrl: string;
-  altText?: string;
+  post_id: string;
+  image_url: string;
+  alt_text?: string;
   caption?: string;
-  createdAt: Date | string;
+  created_at: Date | string;
 }
 
 export interface CreatePostData {
   title: string;
   content: string;
   excerpt?: string;
-  featuredImageUrl?: string;
-  featuredImageAlt?: string;
+  featured_image_url?: string;
+  featured_image_alt?: string;
   status: "draft" | "published";
 }
 
