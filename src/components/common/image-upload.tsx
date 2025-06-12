@@ -331,29 +331,45 @@ export function ImageUpload({
   if (value) {
     return (
       <div className={cn("relative group", className)}>
-        <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+        <div className="relative overflow-hidden rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg">
           <img
             src={value}
             alt="Uploaded image"
-            className="w-full h-48 object-cover transition-transform group-hover:scale-105"
+            className="w-full h-64 object-cover transition-all duration-300 group-hover:scale-105"
+            onLoad={(e) => {
+              // Ensure image is properly loaded
+              const img = e.target as HTMLImageElement;
+              img.style.opacity = "1";
+            }}
+            onError={(e) => {
+              // Handle image load errors
+              const img = e.target as HTMLImageElement;
+              img.style.display = "none";
+              console.error("Failed to load image:", value);
+            }}
+            style={{ opacity: 0, transition: "opacity 0.3s ease-in-out" }}
           />
           {/* Overlay with remove button */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center pb-6">
             <Button
               type="button"
               variant="destructive"
               size="sm"
               onClick={removeImage}
               disabled={disabled}
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
+              className="bg-red-600 hover:bg-red-700 text-white shadow-xl transform hover:scale-105 transition-all duration-200"
             >
-              <XMarkIcon className="h-4 w-4 mr-1" />
-              Remove
+              <XMarkIcon className="h-4 w-4 mr-2" />
+              Remove Image
             </Button>
           </div>
           {/* Success indicator */}
-          <div className="absolute top-3 right-3 bg-green-500 text-white rounded-full p-1.5 shadow-lg">
-            <CheckCircleIcon className="h-4 w-4" />
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full p-2 shadow-lg">
+            <CheckCircleIcon className="h-5 w-5" />
+          </div>
+          {/* Image info overlay */}
+          <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-lg text-sm font-medium">
+            ✅ Image Ready
           </div>
         </div>
       </div>
@@ -430,16 +446,16 @@ export function ImageUpload({
         </details>
       )}
 
-      {/* Supabase Storage Dropzone */}
+      {/* Enhanced Supabase Storage Dropzone */}
       <div
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+          "border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 transform",
           dragActive && !disabled && !isUploading
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300 hover:border-gray-400",
+            ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 scale-105 shadow-lg"
+            : "border-gray-300 hover:border-blue-400 hover:bg-gradient-to-br hover:from-gray-50 hover:to-blue-50",
           disabled || isUploading
             ? "opacity-50 cursor-not-allowed"
-            : "cursor-pointer hover:bg-gray-50"
+            : "cursor-pointer hover:shadow-md hover:scale-102"
         )}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -459,39 +475,52 @@ export function ImageUpload({
           id={`file-upload-${uploadId}`}
         />
 
-        <div className="flex flex-col items-center space-y-4">
-          {isUploading ? (
-            <CloudArrowUpIcon className="h-12 w-12 text-blue-500 animate-pulse" />
-          ) : (
-            <PhotoIcon className="h-12 w-12 text-gray-400" />
-          )}
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative">
+            {isUploading ? (
+              <div className="relative">
+                <CloudArrowUpIcon className="h-16 w-16 text-blue-500 animate-bounce" />
+                <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold">
+                  {uploadProgress}%
+                </div>
+              </div>
+            ) : (
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center">
+                <PhotoIcon className="h-8 w-8 text-blue-600" />
+              </div>
+            )}
+          </div>
 
-          <div className="space-y-2">
-            <p className="text-lg font-medium text-gray-900">
+          <div className="space-y-3 text-center">
+            <h3 className="text-xl font-bold text-gray-900">
               {isUploading ? `Uploading... ${uploadProgress}%` : placeholder}
-            </p>
-            <p className="text-sm text-gray-500">
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed max-w-sm">
               {isUploading
-                ? "Please wait while your image is being uploaded"
-                : `Drag and drop an image here, or click to select`}
+                ? "Please wait while your image is being uploaded to secure storage"
+                : `Drag and drop an image here, or click the button below to browse your files`}
             </p>
-            <p className="text-xs text-gray-400">
-              {acceptedTypes
-                .map((type) => type.split("/")[1])
-                .join(", ")
-                .toUpperCase()}{" "}
-              up to {maxSizeMB}MB
-            </p>
+            <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+              <span className="px-2 py-1 bg-gray-100 rounded-lg">
+                {acceptedTypes
+                  .map((type) => type.split("/")[1])
+                  .join(", ")
+                  .toUpperCase()}
+              </span>
+              <span>•</span>
+              <span>Max {maxSizeMB}MB</span>
+            </div>
           </div>
 
           {!isUploading && (
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="mt-4"
+              size="lg"
+              className="mt-6 bg-white border-blue-200 text-blue-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:border-blue-300 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105"
               disabled={disabled}
             >
+              <PhotoIcon className="h-5 w-5 mr-2" />
               Choose Image
             </Button>
           )}

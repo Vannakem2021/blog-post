@@ -58,9 +58,20 @@ export default function NewPostPage() {
     <div className="flex-1 overflow-auto">
       <Header title="Create New Post" />
 
-      <main className="p-6">
-        <div className="max-w-6xl mx-auto">
-          <PostForm onSubmit={handleSubmit} onCancel={handleCancel} />
+      <main className="p-8 lg:p-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-200 p-8 lg:p-12">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                ✍️ Create New Post
+              </h2>
+              <p className="text-gray-600">
+                Share your thoughts and insights with the world
+              </p>
+            </div>
+
+            <PostForm onSubmit={handleSubmit} onCancel={handleCancel} />
+          </div>
         </div>
       </main>
     </div>

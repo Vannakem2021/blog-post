@@ -6,15 +6,11 @@ import { Pagination } from "@/components/blog/pagination";
 import { mockBreakingNews } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
 
-// Get published posts from database
-async function getPublishedPosts(page = 1, limit = 9) {
+// Get published posts from database with optional category filter
+async function getPublishedPosts(page = 1, limit = 9, category?: string) {
   const supabase = await createClient();
 
-  const {
-    data: posts,
-    error,
-    count,
-  } = await supabase
+  let query = supabase
     .from("posts")
     .select(
       `
@@ -26,7 +22,18 @@ async function getPublishedPosts(page = 1, limit = 9) {
     `,
       { count: "exact" }
     )
-    .eq("status", "published")
+    .eq("status", "published");
+
+  // Add category filter if provided
+  if (category) {
+    query = query.eq("category", category);
+  }
+
+  const {
+    data: posts,
+    error,
+    count,
+  } = await query
     .order("created_at", { ascending: false })
     .range((page - 1) * limit, page * limit - 1);
 
@@ -38,14 +45,23 @@ async function getPublishedPosts(page = 1, limit = 9) {
   return { posts: posts || [], total: count || 0 };
 }
 
-export default async function NewsPage() {
-  // In a real app, this would come from search params
-  const currentPage = 1;
+interface NewsPageProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default async function NewsPage({ searchParams }: NewsPageProps) {
+  // Get search parameters
+  const currentPage = Number(searchParams.page) || 1;
+  const category =
+    typeof searchParams.category === "string"
+      ? searchParams.category
+      : undefined;
   const postsPerPage = 9;
 
   const { posts, total: totalPosts } = await getPublishedPosts(
     currentPage,
-    postsPerPage
+    postsPerPage,
+    category
   );
   const totalPages = Math.ceil(totalPosts / postsPerPage);
 
@@ -70,13 +86,31 @@ export default async function NewsPage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-6 leading-tight">
-              All News & Articles
-            </h1>
-            <p className="text-xl text-gray-600 leading-relaxed">
-              Stay informed with the latest breaking news, in-depth analysis,
-              and comprehensive coverage from around the world
-            </p>
+            {category ? (
+              <>
+                <div className="inline-flex items-center px-6 py-3 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 shadow-sm mb-6">
+                  📂 {category.charAt(0).toUpperCase() + category.slice(1)}{" "}
+                  Category
+                </div>
+                <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-6 leading-tight">
+                  {category.charAt(0).toUpperCase() + category.slice(1)} News
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Discover the latest {category} stories, breaking news, and
+                  in-depth analysis from our expert journalists
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-6 leading-tight">
+                  All News & Articles
+                </h1>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  Stay informed with the latest breaking news, in-depth
+                  analysis, and comprehensive coverage from around the world
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -92,18 +126,35 @@ export default async function NewsPage() {
             <div className="lg:col-span-3">
               {posts.length > 0 ? (
                 <>
-                  {/* Grid Header */}
+                  {/* Enhanced Grid Header */}
                   <div className="flex items-center justify-between mb-12">
                     <div>
                       <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                        Latest Articles
+                        {category
+                          ? `${
+                              category.charAt(0).toUpperCase() +
+                              category.slice(1)
+                            } Articles`
+                          : "Latest Articles"}
                       </h2>
                       <p className="text-gray-600">
-                        Discover our most recent stories and breaking news
+                        {category
+                          ? `Browse all ${category} stories and updates`
+                          : "Discover our most recent stories and breaking news"}
                       </p>
                     </div>
-                    <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-                      {totalPosts} articles found
+                    <div className="flex items-center space-x-4">
+                      {category && (
+                        <a
+                          href="/blog"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                        >
+                          ← All Categories
+                        </a>
+                      )}
+                      <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+                        {totalPosts} {category ? category : "total"} articles
+                      </div>
                     </div>
                   </div>
 
@@ -123,7 +174,9 @@ export default async function NewsPage() {
                       <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        baseUrl="/blog"
+                        baseUrl={
+                          category ? `/blog?category=${category}` : "/blog"
+                        }
                       />
                     </div>
                   )}
@@ -147,13 +200,36 @@ export default async function NewsPage() {
                       </svg>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                      No articles found
+                      {category
+                        ? `No ${category} articles found`
+                        : "No articles found"}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      We're working hard to bring you the latest news and
-                      updates. Check back soon for breaking stories and in-depth
-                      coverage!
+                    <p className="text-gray-600 leading-relaxed mb-6">
+                      {category
+                        ? `We don't have any ${category} articles at the moment. Check back soon for new stories in this category!`
+                        : "We're working hard to bring you the latest news and updates. Check back soon for breaking stories and in-depth coverage!"}
                     </p>
+                    {category && (
+                      <a
+                        href="/blog"
+                        className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      >
+                        <span>Browse All Categories</span>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </a>
+                    )}
                   </div>
                 </div>
               )}

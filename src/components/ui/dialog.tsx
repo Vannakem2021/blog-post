@@ -1,13 +1,13 @@
-import { Fragment } from 'react'
-import { Dialog as HeadlessDialog, Transition } from '@headlessui/react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
-import { cn } from '@/lib/utils'
+import { Fragment } from "react";
+import { Dialog as HeadlessDialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { cn } from "@/lib/utils";
 
 interface DialogProps {
-  open: boolean
-  onClose: () => void
-  children: React.ReactNode
-  className?: string
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  className?: string;
 }
 
 export function Dialog({ open, onClose, children, className }: DialogProps) {
@@ -23,7 +23,7 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -39,7 +39,7 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
             >
               <HeadlessDialog.Panel
                 className={cn(
-                  "w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all",
+                  "w-full max-w-md transform overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 p-8 text-left align-middle shadow-2xl border border-gray-200 transition-all",
                   className
                 )}
               >
@@ -50,37 +50,41 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
         </div>
       </HeadlessDialog>
     </Transition>
-  )
+  );
 }
 
 interface DialogHeaderProps {
-  children: React.ReactNode
-  onClose?: () => void
+  children: React.ReactNode;
+  onClose?: () => void;
 }
 
 export function DialogHeader({ children, onClose }: DialogHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <HeadlessDialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+    <div className="flex items-start justify-between mb-6">
+      <HeadlessDialog.Title as="div" className="flex-1">
         {children}
       </HeadlessDialog.Title>
       {onClose && (
         <button
           type="button"
-          className="rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="ml-4 rounded-xl p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
           onClick={onClose}
         >
-          <XMarkIcon className="h-6 w-6" />
+          <XMarkIcon className="h-5 w-5" />
         </button>
       )}
     </div>
-  )
+  );
 }
 
 export function DialogContent({ children }: { children: React.ReactNode }) {
-  return <div className="mt-2">{children}</div>
+  return <div className="mb-6">{children}</div>;
 }
 
 export function DialogFooter({ children }: { children: React.ReactNode }) {
-  return <div className="mt-6 flex justify-end space-x-3">{children}</div>
+  return (
+    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+      {children}
+    </div>
+  );
 }

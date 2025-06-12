@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +16,22 @@ import {
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
-import { newsCategories } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth/context";
+import { createClient } from "@/lib/supabase/client";
+
+// Types for category data
+interface CategoryData {
+  name: string;
+  slug: string;
+  count: number;
+  recentPosts: {
+    id: string;
+    title: string;
+    slug: string;
+    published_at: string;
+    featured_image_url?: string;
+  }[];
+}
 
 interface NewsHeaderProps {
   hasBreakingNews?: boolean;
@@ -26,7 +41,78 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [loading, setLoading] = useState(true);
   const { user, isAdmin, signOut } = useAuth();
+  const searchParams = useSearchParams();
+  const activeCategory = searchParams?.get("category");
+
+  // Fetch categories with post counts and recent posts
+  const fetchCategories = async () => {
+    try {
+      const supabase = createClient();
+
+      // Get all unique categories with post counts
+      const { data: categoryData, error: categoryError } = await supabase
+        .from("posts")
+        .select("category")
+        .eq("status", "published");
+
+      if (categoryError) throw categoryError;
+
+      // Count posts per category and get unique categories
+      const categoryCounts = categoryData.reduce(
+        (acc: Record<string, number>, post) => {
+          acc[post.category] = (acc[post.category] || 0) + 1;
+          return acc;
+        },
+        {}
+      );
+
+      // Fetch recent posts for each category
+      const categoryPromises = Object.entries(categoryCounts).map(
+        async ([categorySlug, count]) => {
+          const { data: recentPosts, error: postsError } = await supabase
+            .from("posts")
+            .select("id, title, slug, published_at, featured_image_url")
+            .eq("category", categorySlug)
+            .eq("status", "published")
+            .order("published_at", { ascending: false })
+            .limit(3);
+
+          if (postsError) throw postsError;
+
+          // Convert category slug to display name
+          const categoryName =
+            categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
+
+          return {
+            name: categoryName,
+            slug: categorySlug,
+            count,
+            recentPosts: recentPosts || [],
+          };
+        }
+      );
+
+      const categoriesWithPosts = await Promise.all(categoryPromises);
+
+      // Sort by post count (descending) and take top 6
+      const sortedCategories = categoriesWithPosts
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+
+      setCategories(sortedCategories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const currentTime = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -73,17 +159,34 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
-            {newsCategories.slice(0, 5).map((category) => (
-              <Link
-                key={category.slug}
-                href={`/${category.slug}`}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                {category.name}
-              </Link>
-            ))}
+          {/* Enhanced Desktop Navigation */}
+          <div className="hidden lg:flex items-center space-x-2">
+            {loading ? (
+              // Loading skeleton
+              <div className="flex space-x-2">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-8 w-20 bg-gray-200 rounded-lg animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : (
+              categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/blog?category=${category.slug}`}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+                    activeCategory === category.slug
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-md"
+                  )}
+                >
+                  {category.name}
+                </Link>
+              ))
+            )}
           </div>
 
           {/* Search and Actions */}
@@ -190,18 +293,35 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
               </form>
             </div>
 
-            {/* Mobile Categories */}
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {newsCategories.map((category) => (
-                <Link
-                  key={category.slug}
-                  href={`/${category.slug}`}
-                  className="block px-3 py-2 text-sm font-medium text-gray-800 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {category.name}
-                </Link>
-              ))}
+            {/* Enhanced Mobile Categories */}
+            <div className="grid grid-cols-1 gap-3 mb-4">
+              {loading ? (
+                // Loading skeleton for mobile
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-12 bg-gray-200 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (
+                categories.map((category) => (
+                  <Link
+                    key={category.slug}
+                    href={`/blog?category=${category.slug}`}
+                    className={cn(
+                      "block p-4 rounded-xl text-sm font-medium transition-all duration-200",
+                      activeCategory === category.slug
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                        : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 border border-gray-200 hover:border-blue-200"
+                    )}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {category.name}
+                  </Link>
+                ))
+              )}
             </div>
 
             {/* Mobile Admin Link */}
