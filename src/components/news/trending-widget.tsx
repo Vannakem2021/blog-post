@@ -1,14 +1,7 @@
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { BlogPost } from "@/lib/types";
 import { getTrendingPosts } from "@/lib/mock-data";
-import {
-  ArrowTrendingUpIcon,
-  FireIcon,
-  EyeIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
+import { EyeIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
 
 interface TrendingWidgetProps {
@@ -39,99 +32,135 @@ export function TrendingWidget({
     return `${diffInDays}d ago`;
   };
 
-  const getTrendingIcon = (index: number) => {
-    if (index === 0) return <FireIcon className="h-4 w-4 text-red-500" />;
-    if (index === 1)
-      return <ArrowTrendingUpIcon className="h-4 w-4 text-orange-500" />;
-    return (
-      <span className="text-sm font-bold text-gray-400">#{index + 1}</span>
-    );
-  };
-
-  const getTrendingColor = (index: number) => {
-    if (index === 0) return "text-red-600";
-    if (index === 1) return "text-orange-600";
-    if (index === 2) return "text-yellow-600";
-    return "text-gray-600";
-  };
-
   return (
-    <Card className={cn("sticky top-24", className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center space-x-2 text-lg">
-          <ArrowTrendingUpIcon className="h-5 w-5 text-red-500" />
-          <span>Trending Now</span>
-        </CardTitle>
-      </CardHeader>
+    <div className={cn("p-8", className)}>
+      <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-8 pb-4 border-b border-gray-200">
+        🔥 Trending Now
+      </h3>
 
-      <CardContent className="space-y-4">
-        {trendingPosts.map((post, index) => (
-          <div key={post.id} className="group">
-            <Link href={`/news/${post.slug}`}>
-              <div className="flex items-start space-x-3 p-2 -m-2 rounded-lg hover:bg-secondary transition-colors">
-                {/* Trending Number/Icon */}
-                <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                  {getTrendingIcon(index)}
-                </div>
+      <div className="space-y-6">
+        {trendingPosts.map((post, index) => {
+          const trendingData = [
+            {
+              bgColor: "bg-gradient-to-r from-red-50 to-red-100",
+              iconColor: "text-red-600",
+              icon: "🔥",
+              rank: "#1",
+            },
+            {
+              bgColor: "bg-gradient-to-r from-orange-50 to-orange-100",
+              iconColor: "text-orange-600",
+              icon: "📈",
+              rank: "#2",
+            },
+            {
+              bgColor: "bg-gradient-to-r from-yellow-50 to-yellow-100",
+              iconColor: "text-yellow-600",
+              icon: "⭐",
+              rank: "#3",
+            },
+            {
+              bgColor: "bg-gradient-to-r from-blue-50 to-blue-100",
+              iconColor: "text-blue-600",
+              icon: "📰",
+              rank: `#${index + 1}`,
+            },
+            {
+              bgColor: "bg-gradient-to-r from-purple-50 to-purple-100",
+              iconColor: "text-purple-600",
+              icon: "💫",
+              rank: `#${index + 1}`,
+            },
+          ];
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <h4
-                    className={cn(
-                      "font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors",
-                      getTrendingColor(index)
-                    )}
-                  >
-                    {post.title}
-                  </h4>
+          const itemData = trendingData[index] || trendingData[3];
 
-                  <div className="flex items-center space-x-3 mt-1 text-xs text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <EyeIcon className="h-3 w-3" />
-                      <span>{post.viewCount?.toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex items-center space-x-1">
-                      <ClockIcon className="h-3 w-3" />
-                      <span>
-                        {formatTimeAgo(post.publishedAt || post.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {post.isBreaking && (
-                    <Badge variant="destructive" className="text-xs mt-1">
-                      BREAKING
-                    </Badge>
+          return (
+            <div key={post.id} className="group">
+              <Link href={`/blog/${post.slug}`}>
+                <div
+                  className={cn(
+                    "flex items-center justify-between p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100",
+                    itemData.bgColor
                   )}
-                </div>
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="text-2xl">{itemData.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span
+                          className={cn(
+                            "text-xs font-bold",
+                            itemData.iconColor
+                          )}
+                        >
+                          {itemData.rank}
+                        </span>
+                        <span className="text-xs text-gray-500">TRENDING</span>
+                      </div>
+                      <h4 className="font-semibold text-sm text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 leading-tight">
+                        {post.title}
+                      </h4>
 
-                {/* Thumbnail */}
-                {post.featuredImageUrl && (
-                  <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden">
-                    <img
-                      src={post.featuredImageUrl}
-                      alt={post.featuredImageAlt || post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
+                      <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          <EyeIcon className="h-3 w-3" />
+                          <span>
+                            {post.view_count?.toLocaleString() || "1.2K"}
+                          </span>
+                        </div>
+                        <span>•</span>
+                        <div className="flex items-center space-x-1">
+                          <ClockIcon className="h-3 w-3" />
+                          <span>
+                            {formatTimeAgo(
+                              post.published_at || post.created_at
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            </Link>
-          </div>
-        ))}
+                  <div className="text-gray-400">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          );
+        })}
+      </div>
 
-        {/* View All Link */}
-        <div className="pt-3 border-t border-border">
-          <Link
-            href="/trending"
-            className="block text-center text-sm font-medium text-primary hover:text-blue-700 transition-colors"
-          >
-            View All Trending →
-          </Link>
+      {/* Enhanced View All Link */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <Link
+          href="/trending"
+          className="block text-center text-sm font-semibold text-blue-600 hover:text-blue-700 transition-all duration-200 py-3 px-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-transparent hover:border-blue-100"
+        >
+          View All Trending Stories →
+        </Link>
+      </div>
+
+      {/* Live indicator */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span>Updated every 5 minutes</span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
