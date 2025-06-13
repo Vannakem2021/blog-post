@@ -379,42 +379,7 @@ export function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
     return () => clearTimeout(timer);
   }, [watchedTitle, content, watchedCategory, featuredImage, trigger]);
 
-  // Debug logging for validation state (only in development)
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      const criticalErrorFields = [
-        "title",
-        "content",
-        "category",
-        "scheduled_at",
-        "featured_image_alt",
-      ];
-      const criticalErrors = Object.keys(errors || {}).filter((field) =>
-        criticalErrorFields.includes(field)
-      );
-
-      console.log("🔍 Form Validation Debug:", {
-        isFormValid,
-        watchedTitle: watchedTitle?.length || 0,
-        contentLength: (content || "").trim().length,
-        featuredImage: !!featuredImage,
-        featuredImageAlt: watchedFeaturedImageAlt?.trim() || "",
-        allErrors: Object.keys(errors || {}),
-        criticalErrors,
-        metaTitle: metaTitle?.length || 0,
-        isValid,
-      });
-    }
-  }, [
-    isFormValid,
-    watchedTitle,
-    content,
-    featuredImage,
-    watchedFeaturedImageAlt,
-    errors,
-    metaTitle,
-    isValid,
-  ]);
+  // Removed debug logging for production
 
   // Auto-generate slug when title changes
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -442,13 +407,7 @@ export function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
   };
 
   const handleFormSubmit = async (data: PostFormData) => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("🚀 Form submission started", {
-        data,
-        isFormValid,
-        isLoading,
-      });
-    }
+    // Removed debug logging for production
 
     try {
       setIsLoading(true);
@@ -867,14 +826,7 @@ export function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
                     type="submit"
                     disabled={isLoading || isSubmitting || !isValid}
                     onClick={() => {
-                      if (process.env.NODE_ENV === "development") {
-                        console.log("🔘 Button clicked", {
-                          isLoading,
-                          isSubmitting,
-                          isFormValid,
-                          isValid,
-                        });
-                      }
+                      // Removed debug logging for production
                     }}
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 h-12 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >

@@ -50,65 +50,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateUserState = async (authUser: User) => {
-    console.log("👤 Updating user state for:", authUser.email);
+    try {
+      // Check if user is in admin emails environment variable
+      const adminEmails =
+        process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",").map((email) =>
+          email.trim()
+        ) || [];
+      const isAdminByEnv = adminEmails.includes(authUser.email || "");
 
-    // Temporary fix: hardcode admin for your email
-    const isYourEmail = authUser.email === "vannakem2021@gmail.com";
+      // Get user profile to check role from database
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role, full_name, avatar_url")
+        .eq("id", authUser.id)
+        .single();
 
-    if (isYourEmail) {
-      console.log("👤 Using hardcoded admin role for your email");
+      if (error) {
+        console.error("Error fetching user profile:", error);
+
+        // If profile doesn't exist but user is in admin emails, create admin profile
+        if (isAdminByEnv) {
+          try {
+            const { error: insertError } = await supabase
+              .from("profiles")
+              .insert({
+                id: authUser.id,
+                email: authUser.email!,
+                role: "admin",
+                status: "active",
+                full_name: authUser.user_metadata?.full_name || "Admin User",
+              });
+
+            if (!insertError) {
+              const userData: AuthUser = {
+                id: authUser.id,
+                email: authUser.email!,
+                role: "admin",
+              };
+              setUser(userData);
+              setIsAdmin(true);
+              return;
+            }
+          } catch (insertError) {
+            console.error("Error creating admin profile:", insertError);
+          }
+        }
+
+        // If profile doesn't exist and not admin by env, user has no access
+        setUser(null);
+        setIsAdmin(false);
+        return;
+      }
+
       const userData: AuthUser = {
         id: authUser.id,
         email: authUser.email!,
-        role: "admin",
+        role: profile?.role || "user",
       };
+
       setUser(userData);
-      setIsAdmin(true);
-      return;
+      setIsAdmin(profile?.role === "admin" || isAdminByEnv);
+    } catch (error) {
+      console.error("Error updating user state:", error);
+      setUser(null);
+      setIsAdmin(false);
     }
-
-    // Get user profile to check role
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("role, fullName, avatarUrl")
-      .eq("id", authUser.id)
-      .single();
-
-    console.log("👤 Profile query result:", { profile, error });
-
-    const userData: AuthUser = {
-      id: authUser.id,
-      email: authUser.email!,
-      role: profile?.role || "user",
-    };
-
-    console.log("👤 Setting user data:", userData);
-    console.log("👤 Is admin?", profile?.role === "admin");
-
-    setUser(userData);
-    setIsAdmin(profile?.role === "admin");
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("🔐 Attempting to sign in with:", email);
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log("🔐 Sign in response:", { data, error });
-
       if (error) {
-        console.error("🔐 Sign in error:", error);
         return { error: error.message };
       }
 
-      console.log("🔐 Sign in successful!");
       return {};
     } catch (error) {
-      console.error("🔐 Unexpected error:", error);
       return { error: "An unexpected error occurred" };
     }
   };

@@ -113,7 +113,6 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
     e.preventDefault();
     if (searchQuery.trim()) {
       // In a real app, this would navigate to search results
-      console.log("Searching for:", searchQuery);
       setSearchQuery("");
       setSearchOpen(false);
     }

@@ -39,11 +39,8 @@ export async function updateSession(request: NextRequest) {
 
   // Check if user is trying to access admin routes
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
-    console.log("🛡️ Middleware: Checking dashboard access for:", user?.email);
-
     // If no user is logged in, redirect to login
     if (!user) {
-      console.log("🛡️ Middleware: No user found, redirecting to login");
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";
       url.searchParams.set("redirectTo", request.nextUrl.pathname);
@@ -51,29 +48,17 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Check if user is admin
-    console.log(
-      "🛡️ Middleware: User found, checking role for user ID:",
-      user.id
-    );
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    console.log("🛡️ Middleware: Profile check result:", { profile, error });
-
     if (!profile || profile.role !== "admin") {
-      console.log(
-        "🛡️ Middleware: Access denied - not admin. Profile:",
-        profile
-      );
       const url = request.nextUrl.clone();
       url.pathname = "/auth/unauthorized";
       return NextResponse.redirect(url);
     }
-
-    console.log("🛡️ Middleware: Access granted - user is admin");
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

@@ -115,42 +115,7 @@ body {
   line-clamp: 3;
 }
 
-/* Accessibility improvements - WCAG compliant contrast ratios */
-.text-high-emphasis {
-  color: var(--gray-900);
-}
-
-.text-medium-emphasis {
-  color: var(--gray-700);
-}
-
-.text-low-emphasis {
-  color: var(--gray-600);
-}
-
-.bg-high-contrast {
-  background-color: var(--gray-900);
-  color: var(--gray-50);
-}
-
-.bg-medium-contrast {
-  background-color: var(--gray-100);
-  color: var(--gray-900);
-}
-
-/* Enhanced card styles - Simplified and consistent */
-.card-elevated {
-  background: var(--card);
-  border-radius: 8px;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
-  border: 1px solid var(--border);
-  transition: all 0.2s ease-in-out;
-}
-
-.card-elevated:hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07);
-  border-color: var(--gray-300);
-}
+/* Removed unused CSS classes for cleaner codebase */
 
 /* Focus states for better accessibility */
 .focus-visible\:ring-2:focus-visible {
@@ -175,22 +140,7 @@ a:focus-visible {
   border-radius: 2px;
 }
 
-/* Modern spacing utilities */
-.space-y-16 > * + * {
-  margin-top: 4rem;
-}
-
-.space-y-12 > * + * {
-  margin-top: 3rem;
-}
-
-.space-y-8 > * + * {
-  margin-top: 2rem;
-}
-
-.space-y-6 > * + * {
-  margin-top: 1.5rem;
-}
+/* Removed redundant spacing utilities - using Tailwind's built-in spacing instead */
 
 /* Enhanced typography */
 .text-balance {
@@ -202,35 +152,7 @@ a:focus-visible {
   transition: all 0.2s ease-in-out;
 }
 
-/* Modern card shadows - Enhanced for better depth */
-.shadow-card {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-}
-
-.shadow-card-hover {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-.shadow-card-elevated {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-
-/* Consistent shadow utilities */
-.shadow-subtle {
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-}
-
-.shadow-soft {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-}
-
-.shadow-medium {
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-.shadow-large {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
+/* Removed redundant shadow utilities - using Tailwind's built-in shadows instead */
 
 /* Improved focus states */
 .focus-ring:focus-visible {

@@ -4,6 +4,19 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { generateSlug } from "@/lib/utils";
 import { NewsCategory } from "@/lib/types";
+import {
+  sanitizeContent,
+  sanitizeUserInput,
+  sanitizeUrl,
+} from "@/lib/security/sanitization";
+import {
+  rateLimitServerAction,
+  RATE_LIMIT_CONFIGS,
+} from "@/lib/security/rate-limit";
+import {
+  validateAdminAccess as enhancedValidateAdminAccess,
+  logSecurityEvent,
+} from "@/lib/security/auth-helpers";
 
 // Validation schemas
 interface CreatePostInput {
@@ -42,30 +55,9 @@ function calculateReadingTime(content: string): number {
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
-// Helper function to validate admin access
+// Helper function to validate admin access (legacy - use enhancedValidateAdminAccess for new code)
 async function validateAdminAccess() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw new Error("Authentication required");
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile || profile.role !== "admin") {
-    throw new Error("Admin access required");
-  }
-
-  return { user, profile };
+  return await enhancedValidateAdminAccess();
 }
 
 // Helper function to validate scheduled post data
@@ -112,6 +104,17 @@ export async function createPost(input: CreatePostInput) {
     console.log("Featured image URL received:", input.featured_image_url);
 
     const { user } = await validateAdminAccess();
+
+    // Rate limiting check
+    const rateLimitResult = await rateLimitServerAction(
+      `create-post:${user.id}`,
+      RATE_LIMIT_CONFIGS.posts
+    );
+
+    if (!rateLimitResult.allowed) {
+      throw new Error(rateLimitResult.message || "Too many requests");
+    }
+
     const supabase = await createClient();
 
     // Validate required fields
@@ -153,14 +156,20 @@ export async function createPost(input: CreatePostInput) {
     const readingTime =
       input.reading_time || calculateReadingTime(input.content);
 
-    // Prepare post data
+    // Sanitize and prepare post data
     const postData = {
-      title: input.title.trim(),
+      title: sanitizeUserInput(input.title.trim()),
       slug,
-      content: input.content,
-      excerpt: input.excerpt?.trim() || null,
-      featured_image_url: input.featured_image_url || null,
-      featured_image_alt: input.featured_image_alt?.trim() || null,
+      content: sanitizeContent(input.content, "richText"),
+      excerpt: input.excerpt?.trim()
+        ? sanitizeUserInput(input.excerpt.trim())
+        : null,
+      featured_image_url: input.featured_image_url
+        ? sanitizeUrl(input.featured_image_url)
+        : null,
+      featured_image_alt: input.featured_image_alt?.trim()
+        ? sanitizeUserInput(input.featured_image_alt.trim())
+        : null,
       category: input.category,
       status: input.status,
       urgency_level: input.urgency_level || "normal",
@@ -174,19 +183,26 @@ export async function createPost(input: CreatePostInput) {
       timezone: input.timezone || "Asia/Phnom_Penh",
       auto_publish:
         input.status === "scheduled" ? input.auto_publish ?? true : false,
-      // SEO fields
-      meta_title: input.meta_title?.trim() || null,
-      meta_description: input.meta_description?.trim() || null,
-      focus_keywords: input.focus_keywords || null,
-      primary_keyword: input.primary_keyword?.trim() || null,
+      // SEO fields (sanitized)
+      meta_title: input.meta_title?.trim()
+        ? sanitizeUserInput(input.meta_title.trim())
+        : null,
+      meta_description: input.meta_description?.trim()
+        ? sanitizeUserInput(input.meta_description.trim())
+        : null,
+      focus_keywords:
+        input.focus_keywords?.map((keyword) => sanitizeUserInput(keyword)) ||
+        null,
+      primary_keyword: input.primary_keyword?.trim()
+        ? sanitizeUserInput(input.primary_keyword.trim())
+        : null,
       is_pillar_content: input.is_pillar_content || false,
       // Published at logic
       published_at:
         input.status === "published" ? new Date().toISOString() : null,
     };
 
-    console.log("Post data being inserted:", postData);
-    console.log("Featured image URL in postData:", postData.featured_image_url);
+    // Removed debug logging for production
 
     // Insert the post
     const { data: post, error } = await supabase
@@ -196,7 +212,6 @@ export async function createPost(input: CreatePostInput) {
       .single();
 
     if (error) {
-      console.error("Database error:", error);
       throw new Error("Failed to create post");
     }
 
@@ -222,7 +237,18 @@ export async function createPost(input: CreatePostInput) {
 // Update an existing blog post
 export async function updatePost(input: UpdatePostInput) {
   try {
-    await validateAdminAccess();
+    const { user } = await validateAdminAccess();
+
+    // Rate limiting check
+    const rateLimitResult = await rateLimitServerAction(
+      `update-post:${user.id}`,
+      RATE_LIMIT_CONFIGS.posts
+    );
+
+    if (!rateLimitResult.allowed) {
+      throw new Error(rateLimitResult.message || "Too many requests");
+    }
+
     const supabase = await createClient();
 
     // Validate required fields
@@ -256,13 +282,19 @@ export async function updatePost(input: UpdatePostInput) {
     const readingTime =
       input.reading_time || calculateReadingTime(input.content);
 
-    // Prepare update data
+    // Sanitize and prepare update data
     const updateData = {
-      title: input.title.trim(),
-      content: input.content,
-      excerpt: input.excerpt?.trim() || null,
-      featured_image_url: input.featured_image_url || null,
-      featured_image_alt: input.featured_image_alt?.trim() || null,
+      title: sanitizeUserInput(input.title.trim()),
+      content: sanitizeContent(input.content, "richText"),
+      excerpt: input.excerpt?.trim()
+        ? sanitizeUserInput(input.excerpt.trim())
+        : null,
+      featured_image_url: input.featured_image_url
+        ? sanitizeUrl(input.featured_image_url)
+        : null,
+      featured_image_alt: input.featured_image_alt?.trim()
+        ? sanitizeUserInput(input.featured_image_alt.trim())
+        : null,
       category: input.category,
       status: input.status,
       urgency_level: input.urgency_level || "normal",
@@ -275,11 +307,19 @@ export async function updatePost(input: UpdatePostInput) {
       timezone: input.timezone || existingPost.timezone || "Asia/Phnom_Penh",
       auto_publish:
         input.status === "scheduled" ? input.auto_publish ?? true : false,
-      // SEO fields
-      meta_title: input.meta_title?.trim() || null,
-      meta_description: input.meta_description?.trim() || null,
-      focus_keywords: input.focus_keywords || null,
-      primary_keyword: input.primary_keyword?.trim() || null,
+      // SEO fields (sanitized)
+      meta_title: input.meta_title?.trim()
+        ? sanitizeUserInput(input.meta_title.trim())
+        : null,
+      meta_description: input.meta_description?.trim()
+        ? sanitizeUserInput(input.meta_description.trim())
+        : null,
+      focus_keywords:
+        input.focus_keywords?.map((keyword) => sanitizeUserInput(keyword)) ||
+        null,
+      primary_keyword: input.primary_keyword?.trim()
+        ? sanitizeUserInput(input.primary_keyword.trim())
+        : null,
       is_pillar_content: input.is_pillar_content || false,
       // Published at logic - handle transitions between statuses
       published_at: (() => {
