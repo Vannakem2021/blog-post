@@ -5,6 +5,7 @@ import { TrendingWidget } from "@/components/news/trending-widget";
 import { Pagination } from "@/components/blog/pagination";
 import { mockBreakingNews } from "@/lib/mock-data";
 import { createClient } from "@/lib/supabase/server";
+import { getTrendingPosts } from "@/app/actions/trending";
 
 // Get published posts from database with optional category filter
 async function getPublishedPosts(page = 1, limit = 9, category?: string) {
@@ -51,18 +52,30 @@ interface NewsPageProps {
 
 export default async function NewsPage({ searchParams }: NewsPageProps) {
   // Get search parameters
-  const currentPage = Number(searchParams.page) || 1;
+  const resolvedSearchParams = await searchParams;
+  const currentPage = Number(resolvedSearchParams.page) || 1;
   const category =
-    typeof searchParams.category === "string"
-      ? searchParams.category
+    typeof resolvedSearchParams.category === "string"
+      ? resolvedSearchParams.category
       : undefined;
   const postsPerPage = 9;
 
-  const { posts, total: totalPosts } = await getPublishedPosts(
-    currentPage,
-    postsPerPage,
-    category
-  );
+  // Fetch posts and trending data in parallel with error handling
+  const [postsResult, trendingResult] = await Promise.allSettled([
+    getPublishedPosts(currentPage, postsPerPage, category),
+    getTrendingPosts({ limit: 5 }),
+  ]);
+
+  const { posts, total: totalPosts } =
+    postsResult.status === "fulfilled"
+      ? postsResult.value
+      : { posts: [], total: 0 };
+  const trendingPosts =
+    trendingResult.status === "fulfilled" ? trendingResult.value : [];
+  const trendingError =
+    trendingResult.status === "rejected"
+      ? "Failed to load trending articles"
+      : null;
   const totalPages = Math.ceil(totalPosts / postsPerPage);
 
   const breakingNews = mockBreakingNews.filter((news) => news.is_active);
@@ -120,16 +133,16 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
         {/* Background with subtle gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-white"></div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Enhanced News Grid */}
             <div className="lg:col-span-3">
               {posts.length > 0 ? (
                 <>
                   {/* Enhanced Grid Header */}
-                  <div className="flex items-center justify-between mb-12">
-                    <div>
-                      <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                  <div className="flex flex-col space-y-4 sm:space-y-6 mb-8 sm:mb-12">
+                    <div className="text-center sm:text-left">
+                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2 sm:mb-3">
                         {category
                           ? `${
                               category.charAt(0).toUpperCase() +
@@ -137,28 +150,30 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
                             } Articles`
                           : "Latest Articles"}
                       </h2>
-                      <p className="text-gray-600">
+                      <p className="text-sm sm:text-base text-gray-600">
                         {category
                           ? `Browse all ${category} stories and updates`
                           : "Discover our most recent stories and breaking news"}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-4">
+
+                    {/* Responsive controls */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 sm:space-x-4">
                       {category && (
                         <a
                           href="/blog"
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors text-center sm:text-left"
                         >
                           ← All Categories
                         </a>
                       )}
-                      <div className="text-sm text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+                      <div className="text-xs sm:text-sm text-gray-500 bg-white px-3 sm:px-4 py-2 rounded-full border border-gray-200 shadow-sm text-center whitespace-nowrap">
                         {totalPosts} {category ? category : "total"} articles
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
                     {posts.map((post) => (
                       <NewsCard
                         key={post.id}
@@ -170,7 +185,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
                   </div>
 
                   {totalPages > 1 && (
-                    <div className="mt-16">
+                    <div className="mt-12 sm:mt-16">
                       <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -236,10 +251,14 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
             </div>
 
             {/* Enhanced Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-8">
+            <div className="lg:col-span-1 mt-8 lg:mt-0">
+              <div className="lg:sticky lg:top-24 space-y-6 sm:space-y-8">
                 <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 backdrop-blur-sm">
-                  <TrendingWidget />
+                  <TrendingWidget
+                    trendingPosts={trendingPosts}
+                    isLoading={false}
+                    error={trendingError}
+                  />
                 </div>
               </div>
             </div>
@@ -248,7 +267,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
       </main>
 
       {/* Enhanced Footer */}
-      <footer className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-16 mt-20">
+      <footer className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-12 sm:py-16 mt-16 sm:mt-20">
         {/* Background Pattern */}
         <div
           className="absolute inset-0 opacity-10"
@@ -259,41 +278,44 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h3 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-6">
+            <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-4 sm:mb-6">
               NewsHub
             </h3>
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
               Your trusted source for breaking news, in-depth reporting, and
               comprehensive coverage from around the world.
             </p>
-            <div className="flex justify-center space-x-8 mb-8">
+
+            {/* Responsive Social Links */}
+            <div className="grid grid-cols-2 sm:flex sm:justify-center gap-3 sm:gap-4 lg:gap-8 mb-6 sm:mb-8 max-w-md sm:max-w-none mx-auto">
               <a
                 href="#"
-                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-4 py-2 rounded-lg hover:bg-white/10"
+                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/10 text-sm sm:text-base text-center"
               >
                 Twitter
               </a>
               <a
                 href="#"
-                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-4 py-2 rounded-lg hover:bg-white/10"
+                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/10 text-sm sm:text-base text-center"
               >
                 Facebook
               </a>
               <a
                 href="#"
-                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-4 py-2 rounded-lg hover:bg-white/10"
+                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/10 text-sm sm:text-base text-center"
               >
                 LinkedIn
               </a>
               <a
                 href="#"
-                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-4 py-2 rounded-lg hover:bg-white/10"
+                className="text-gray-400 hover:text-white transition-all duration-300 transform hover:scale-110 px-3 sm:px-4 py-2 rounded-lg hover:bg-white/10 text-sm sm:text-base text-center"
               >
                 RSS
               </a>
             </div>
-            <div className="pt-8 border-t border-gray-700 text-gray-400">
-              <p className="text-sm">
+
+            <div className="pt-6 sm:pt-8 border-t border-gray-700 text-gray-400">
+              <p className="text-xs sm:text-sm">
                 © 2024 NewsHub. All rights reserved. Built with ❤️ for
                 journalism.
               </p>

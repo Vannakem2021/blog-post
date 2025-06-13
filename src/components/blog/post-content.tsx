@@ -1,16 +1,18 @@
+"use client";
+
+import { useState } from "react";
 import { BlogPost } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { newsCategories } from "@/lib/mock-data";
 import {
   ShareIcon,
-  BookmarkIcon,
-  PrinterIcon,
   ClockIcon,
-  EyeIcon,
   FireIcon,
+  CheckIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface PostContentProps {
   post: BlogPost & {
@@ -24,7 +26,83 @@ interface PostContentProps {
 }
 
 export function PostContent({ post }: PostContentProps) {
+  const [isSharing, setIsSharing] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const category = newsCategories.find((cat) => cat.slug === post.category);
+
+  // Share functionality with enhanced feedback
+  const handleShare = async () => {
+    setIsSharing(true);
+
+    try {
+      const url = window.location.href;
+
+      // Try to use the Web Share API first (mobile devices)
+      if (navigator.share) {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt || "Check out this article",
+          url: url,
+        });
+        toast.success("Article shared successfully!");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+      } else {
+        // Fallback to clipboard API
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copied to clipboard!");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+      }
+    } catch (error) {
+      // Fallback for older browsers
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = window.location.href;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        toast.success("Link copied to clipboard!");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+      } catch (fallbackError) {
+        toast.error("Unable to share article. Please copy the URL manually.");
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // Social media share functions
+  const shareOnTwitter = () => {
+    const url = window.location.href;
+    const text = `${post.title} - ${post.excerpt || "Check out this article"}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      text
+    )}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, "_blank", "width=600,height=400");
+  };
+
+  const shareOnFacebook = () => {
+    const url = window.location.href;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      url
+    )}`;
+    window.open(facebookUrl, "_blank", "width=600,height=400");
+  };
+
+  const shareOnLinkedIn = () => {
+    const url = window.location.href;
+    const title = post.title;
+    const summary = post.excerpt || "Check out this article";
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+      url
+    )}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(
+      summary
+    )}`;
+    window.open(linkedInUrl, "_blank", "width=600,height=400");
+  };
 
   const formatTimeAgo = (date: Date | string) => {
     const now = new Date();
@@ -46,22 +124,22 @@ export function PostContent({ post }: PostContentProps) {
   return (
     <article className="max-w-none">
       {/* Enhanced Header */}
-      <header className="p-12 pb-8">
+      <header className="p-6 sm:p-8 lg:p-12 pb-6 sm:pb-8">
         {/* Category and Breaking News Badges */}
-        <div className="flex items-center space-x-3 mb-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           {post.is_breaking && (
             <Badge
               variant="destructive"
-              className="text-sm px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 border-0"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-red-600 to-red-700 border-0"
             >
-              <FireIcon className="h-4 w-4 mr-2" />
+              <FireIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               BREAKING NEWS
             </Badge>
           )}
           {category && (
             <Badge
               variant="outline"
-              className="text-sm px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 font-semibold"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200 font-semibold"
             >
               {category.name}
             </Badge>
@@ -69,96 +147,95 @@ export function PostContent({ post }: PostContentProps) {
           {post.urgency_level === "urgent" && !post.is_breaking && (
             <Badge
               variant="secondary"
-              className="text-sm px-4 py-2 bg-gradient-to-r from-orange-50 to-orange-100 text-orange-700 border-orange-200"
+              className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-orange-50 to-orange-100 text-orange-700 border-orange-200"
             >
               URGENT
             </Badge>
           )}
         </div>
 
-        <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-6 leading-tight">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4 sm:mb-6 leading-tight">
           {post.title}
         </h1>
 
         {post.excerpt && (
-          <p className="text-2xl text-gray-600 mb-8 leading-relaxed max-w-4xl">
+          <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-6 sm:mb-8 leading-relaxed max-w-4xl">
             {post.excerpt}
           </p>
         )}
 
         {/* Enhanced Article Metadata */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-6 sm:space-y-0">
-            {/* Author and Date Info */}
-            <div className="flex items-center space-x-6">
-              {post.profiles && (
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={post.profiles.avatar_url || "/default-avatar.png"}
-                    alt={post.profiles.full_name || "Author"}
-                    className="w-14 h-14 rounded-full border-4 border-white shadow-lg"
-                  />
-                  <div>
-                    <p className="font-bold text-gray-900 text-lg">
-                      {post.profiles.full_name}
-                    </p>
-                    <p className="text-sm text-gray-600">Staff Writer</p>
-                  </div>
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+          <div className="flex flex-col space-y-4 sm:space-y-6">
+            {/* Author Info */}
+            {post.profiles && (
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <UserCircleIcon className="w-12 h-12 sm:w-14 sm:h-14 text-gray-400 mx-auto sm:mx-0" />
+                <div className="text-center sm:text-left">
+                  <p className="font-bold text-gray-900 text-base sm:text-lg">
+                    {post.profiles.full_name}
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Staff Writer
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
-              <div className="text-sm text-gray-600 space-y-2">
-                <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
-                  <ClockIcon className="h-4 w-4 text-blue-600" />
+            {/* Metadata and Share Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              {/* Horizontal metadata layout */}
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-600">
+                <div className="flex items-center justify-center sm:justify-start space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
+                  <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                   <span className="font-medium">
                     {formatTimeAgo(post.published_at || post.created_at)}
                   </span>
                 </div>
                 {post.reading_time && (
-                  <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
+                  <div className="flex items-center justify-center sm:justify-start space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
                     <span className="text-blue-600">📖</span>
                     <span className="font-medium">
                       {post.reading_time} min read
                     </span>
                   </div>
                 )}
-                {post.view_count && (
-                  <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg shadow-sm">
-                    <EyeIcon className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">
-                      {post.view_count.toLocaleString()} views
-                    </span>
-                  </div>
-                )}
               </div>
-            </div>
 
-            {/* Enhanced Social Actions */}
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-white hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800 shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <ShareIcon className="h-5 w-5 mr-2" />
-                Share
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800 shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <BookmarkIcon className="h-5 w-5 mr-2" />
-                Save
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:text-gray-800 shadow-sm hover:shadow-md transition-all duration-200"
-              >
-                <PrinterIcon className="h-5 w-5 mr-2" />
-                Print
-              </Button>
+              {/* Enhanced Share Action */}
+              <div className="flex justify-center sm:justify-end">
+                <Button
+                  onClick={handleShare}
+                  disabled={isSharing || isCopied}
+                  variant="outline"
+                  size="sm"
+                  className={`shadow-sm hover:shadow-md transition-all duration-200 disabled:cursor-not-allowed text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 ${
+                    isCopied
+                      ? "bg-green-50 border-green-200 text-green-700"
+                      : "bg-white hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800"
+                  }`}
+                >
+                  {isSharing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-600 border-t-transparent mr-1 sm:mr-2"></div>
+                      <span className="hidden sm:inline">Sharing...</span>
+                      <span className="sm:hidden">...</span>
+                    </>
+                  ) : isCopied ? (
+                    <>
+                      <CheckIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Copied!</span>
+                      <span className="sm:hidden">✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShareIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Share Article</span>
+                      <span className="sm:hidden">Share</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -166,7 +243,7 @@ export function PostContent({ post }: PostContentProps) {
 
       {/* Enhanced Featured Image */}
       {post.featured_image_url && (
-        <div className="px-12 mb-12">
+        <div className="px-6 sm:px-8 lg:px-12 mb-8 sm:mb-12">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl">
             <img
               src={post.featured_image_url}
@@ -176,7 +253,7 @@ export function PostContent({ post }: PostContentProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
           </div>
           {post.featured_image_alt && (
-            <p className="text-sm text-gray-500 text-center mt-4 italic bg-gray-50 px-4 py-2 rounded-lg">
+            <p className="text-xs sm:text-sm text-gray-500 text-center mt-3 sm:mt-4 italic bg-gray-50 px-3 sm:px-4 py-2 rounded-lg">
               {post.featured_image_alt}
             </p>
           )}
@@ -184,60 +261,67 @@ export function PostContent({ post }: PostContentProps) {
       )}
 
       {/* Enhanced Content */}
-      <div className="px-12 pb-12">
+      <div className="px-6 sm:px-8 lg:px-12 pb-8 sm:pb-12">
         <div
-          className="prose prose-xl max-w-none
+          className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl max-w-none
             prose-headings:text-gray-900 prose-headings:font-bold prose-headings:tracking-tight
-            prose-h1:text-4xl prose-h1:mb-8 prose-h1:mt-12
-            prose-h2:text-3xl prose-h2:mb-6 prose-h2:mt-10 prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-3
-            prose-h3:text-2xl prose-h3:mb-4 prose-h3:mt-8
-            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6
+            prose-h1:text-2xl sm:prose-h1:text-3xl lg:prose-h1:text-4xl prose-h1:mb-6 sm:prose-h1:mb-8 prose-h1:mt-8 sm:prose-h1:mt-12
+            prose-h2:text-xl sm:prose-h2:text-2xl lg:prose-h2:text-3xl prose-h2:mb-4 sm:prose-h2:mb-6 prose-h2:mt-6 sm:prose-h2:mt-10 prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 sm:prose-h2:pb-3
+            prose-h3:text-lg sm:prose-h3:text-xl lg:prose-h3:text-2xl prose-h3:mb-3 sm:prose-h3:mb-4 prose-h3:mt-6 sm:prose-h3:mt-8
+            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 sm:prose-p:mb-6
             prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
             prose-strong:text-gray-900 prose-strong:font-bold
             prose-em:text-gray-600 prose-em:italic
-            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:p-6 prose-blockquote:rounded-r-lg prose-blockquote:my-8
-            prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:font-mono prose-code:text-sm
-            prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:p-6 prose-pre:overflow-x-auto prose-pre:shadow-lg
-            prose-ul:my-6 prose-ol:my-6
-            prose-li:my-2 prose-li:text-gray-700
-            prose-img:rounded-xl prose-img:shadow-lg prose-img:my-8
-            prose-hr:border-gray-300 prose-hr:my-12
-            prose-table:border-collapse prose-table:border prose-table:border-gray-300 prose-table:rounded-lg prose-table:overflow-hidden
-            prose-th:bg-gray-50 prose-th:border prose-th:border-gray-300 prose-th:p-3 prose-th:text-left prose-th:font-semibold
-            prose-td:border prose-td:border-gray-300 prose-td:p-3"
+            prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:p-4 sm:prose-blockquote:p-6 prose-blockquote:rounded-r-lg prose-blockquote:my-6 sm:prose-blockquote:my-8
+            prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5 sm:prose-code:px-2 prose-code:py-0.5 sm:prose-code:py-1 prose-code:rounded prose-code:font-mono prose-code:text-xs sm:prose-code:text-sm
+            prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:p-4 sm:prose-pre:p-6 prose-pre:overflow-x-auto prose-pre:shadow-lg prose-pre:text-sm sm:prose-pre:text-base
+            prose-ul:my-4 sm:prose-ul:my-6 prose-ol:my-4 sm:prose-ol:my-6
+            prose-li:my-1 sm:prose-li:my-2 prose-li:text-gray-700
+            prose-img:rounded-xl prose-img:shadow-lg prose-img:my-6 sm:prose-img:my-8 prose-img:w-full prose-img:h-auto
+            prose-hr:border-gray-300 prose-hr:my-8 sm:prose-hr:my-12
+            prose-table:border-collapse prose-table:border prose-table:border-gray-300 prose-table:rounded-lg prose-table:overflow-hidden prose-table:text-sm sm:prose-table:text-base
+            prose-th:bg-gray-50 prose-th:border prose-th:border-gray-300 prose-th:p-2 sm:prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:text-xs sm:prose-th:text-sm
+            prose-td:border prose-td:border-gray-300 prose-td:p-2 sm:prose-td:p-3 prose-td:text-xs sm:prose-td:text-sm"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
       </div>
 
       {/* Enhanced Footer */}
-      <footer className="px-12 pb-12">
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8">
+      <footer className="px-6 sm:px-8 lg:px-12 pb-8 sm:pb-12">
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 sm:p-8">
           <div className="text-center">
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
+            <div className="mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2 sm:mb-3">
                 💝 Thank You for Reading!
               </h3>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
                 We hope you found this article informative and engaging.
               </p>
             </div>
 
             {/* Enhanced Social sharing buttons */}
-            <div className="flex justify-center space-x-4 mb-6">
-              <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <button
+                onClick={shareOnTwitter}
+                className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base"
+              >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
                   <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
                 </svg>
-                <span>Share on Twitter</span>
+                <span className="hidden sm:inline">Share on Twitter</span>
+                <span className="sm:hidden">Twitter</span>
               </button>
 
-              <button className="flex items-center space-x-2 bg-blue-800 hover:bg-blue-900 text-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+              <button
+                onClick={shareOnFacebook}
+                className="flex items-center justify-center space-x-2 bg-blue-800 hover:bg-blue-900 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base"
+              >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -247,12 +331,16 @@ export function PostContent({ post }: PostContentProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Share on Facebook</span>
+                <span className="hidden sm:inline">Share on Facebook</span>
+                <span className="sm:hidden">Facebook</span>
               </button>
 
-              <button className="flex items-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+              <button
+                onClick={shareOnLinkedIn}
+                className="flex items-center justify-center space-x-2 bg-blue-700 hover:bg-blue-800 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base"
+              >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -262,11 +350,12 @@ export function PostContent({ post }: PostContentProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Share on LinkedIn</span>
+                <span className="hidden sm:inline">Share on LinkedIn</span>
+                <span className="sm:hidden">LinkedIn</span>
               </button>
             </div>
 
-            <div className="text-sm text-gray-500 border-t border-gray-200 pt-6">
+            <div className="text-xs sm:text-sm text-gray-500 border-t border-gray-200 pt-4 sm:pt-6">
               <p>
                 Published on{" "}
                 {new Date(

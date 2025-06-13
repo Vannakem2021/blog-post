@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,140 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isRichMode, setIsRichMode] = useState(false);
+
+  // Convert HTML to Markdown
+  const htmlToMarkdown = useCallback((html: string): string => {
+    let markdown = html;
+
+    // Convert headings
+    markdown = markdown.replace(/<h1[^>]*>(.*?)<\/h1>/gi, "\n# $1\n");
+    markdown = markdown.replace(/<h2[^>]*>(.*?)<\/h2>/gi, "\n## $1\n");
+    markdown = markdown.replace(/<h3[^>]*>(.*?)<\/h3>/gi, "\n### $1\n");
+    markdown = markdown.replace(/<h4[^>]*>(.*?)<\/h4>/gi, "\n#### $1\n");
+    markdown = markdown.replace(/<h5[^>]*>(.*?)<\/h5>/gi, "\n##### $1\n");
+    markdown = markdown.replace(/<h6[^>]*>(.*?)<\/h6>/gi, "\n###### $1\n");
+
+    // Convert bold and strong
+    markdown = markdown.replace(
+      /<(b|strong)[^>]*>(.*?)<\/(b|strong)>/gi,
+      "**$2**"
+    );
+
+    // Convert italic and emphasis
+    markdown = markdown.replace(/<(i|em)[^>]*>(.*?)<\/(i|em)>/gi, "*$2*");
+
+    // Convert underline
+    markdown = markdown.replace(/<u[^>]*>(.*?)<\/u>/gi, "<u>$1</u>");
+
+    // Convert unordered lists
+    markdown = markdown.replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
+      const items = content.replace(/<li[^>]*>(.*?)<\/li>/gis, "- $1\n");
+      return "\n" + items + "\n";
+    });
+
+    // Convert ordered lists
+    markdown = markdown.replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
+      let counter = 1;
+      const items = content.replace(/<li[^>]*>(.*?)<\/li>/gis, () => {
+        return `${counter++}. $1\n`;
+      });
+      return "\n" + items + "\n";
+    });
+
+    // Convert links
+    markdown = markdown.replace(
+      /<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi,
+      "[$2]($1)"
+    );
+
+    // Convert images
+    markdown = markdown.replace(
+      /<img[^>]*src="([^"]*)"[^>]*alt="([^"]*)"[^>]*\/?>/gi,
+      "![$2]($1)"
+    );
+    markdown = markdown.replace(
+      /<img[^>]*src="([^"]*)"[^>]*\/?>/gi,
+      "![Image]($1)"
+    );
+
+    // Convert paragraphs
+    markdown = markdown.replace(/<p[^>]*>(.*?)<\/p>/gis, "\n$1\n");
+
+    // Convert line breaks
+    markdown = markdown.replace(/<br\s*\/?>/gi, "\n");
+
+    // Convert divs to paragraphs
+    markdown = markdown.replace(/<div[^>]*>(.*?)<\/div>/gis, "\n$1\n");
+
+    // Remove remaining HTML tags
+    markdown = markdown.replace(/<[^>]*>/g, "");
+
+    // Clean up extra whitespace and newlines
+    markdown = markdown.replace(/\n\s*\n\s*\n/g, "\n\n");
+    markdown = markdown.replace(/^\s+|\s+$/g, "");
+
+    // Decode HTML entities
+    markdown = markdown.replace(/&nbsp;/g, " ");
+    markdown = markdown.replace(/&amp;/g, "&");
+    markdown = markdown.replace(/&lt;/g, "<");
+    markdown = markdown.replace(/&gt;/g, ">");
+    markdown = markdown.replace(/&quot;/g, '"');
+    markdown = markdown.replace(/&#39;/g, "'");
+
+    return markdown;
+  }, []);
+
+  // Handle paste events to preserve formatting
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      e.preventDefault();
+
+      const clipboardData = e.clipboardData;
+      const htmlData = clipboardData.getData("text/html");
+      const textData = clipboardData.getData("text/plain");
+
+      if (htmlData && htmlData.trim()) {
+        // Convert HTML to Markdown
+        const markdownContent = htmlToMarkdown(htmlData);
+
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newValue =
+          value.substring(0, start) + markdownContent + value.substring(end);
+
+        onChange(newValue);
+
+        // Set cursor position after the pasted content
+        setTimeout(() => {
+          textarea.focus();
+          const newCursorPos = start + markdownContent.length;
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 10);
+      } else if (textData) {
+        // Fallback to plain text
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newValue =
+          value.substring(0, start) + textData + value.substring(end);
+
+        onChange(newValue);
+
+        setTimeout(() => {
+          textarea.focus();
+          const newCursorPos = start + textData.length;
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+        }, 10);
+      }
+    },
+    [value, onChange, htmlToMarkdown]
+  );
 
   const toolbarButtons = [
     { icon: BoldIcon, label: "Bold", action: () => insertMarkdown("**", "**") },
@@ -309,17 +443,26 @@ export function RichTextEditor({
             {renderMarkdownPreview(value)}
           </div>
         ) : (
-          <Textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="min-h-[400px] border-0 rounded-none resize-none focus:ring-0 p-6 text-gray-900 leading-relaxed text-base placeholder:text-gray-400"
-            style={{
-              fontFamily:
-                'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-            }}
-          />
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              onPaste={handlePaste}
+              placeholder={placeholder}
+              className="min-h-[400px] border-0 rounded-none resize-none focus:ring-0 p-6 text-gray-900 leading-relaxed text-base placeholder:text-gray-400"
+              style={{
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+              }}
+            />
+            {!value && (
+              <div className="absolute bottom-4 left-6 text-xs text-gray-400 pointer-events-none">
+                💡 Tip: Paste formatted content from websites or documents -
+                formatting will be preserved!
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -237,3 +237,13 @@ a:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* Utility classes for responsive design */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}

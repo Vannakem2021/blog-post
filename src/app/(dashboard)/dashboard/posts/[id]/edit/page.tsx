@@ -6,7 +6,7 @@ import { Header } from "@/components/dashboard/header";
 import { PostForm } from "@/components/dashboard/post-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getPost } from "@/app/actions/posts";
+import { getPost, updatePost } from "@/app/actions/posts";
 import { BlogPost, CreatePostData } from "@/lib/types";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -43,10 +43,19 @@ export default function EditPostPage() {
   }, [postId]);
 
   const handleSubmit = async (data: CreatePostData) => {
-    // TODO: Implement updatePost action
-    console.log("Updating post:", { id: postId, ...data });
-    toast.success("Post updated successfully!");
-    router.push(`/dashboard/posts/${postId}`);
+    try {
+      const result = await updatePost({ id: postId, ...data });
+
+      if (result.success) {
+        toast.success(result.message || "Post updated successfully!");
+        router.push(`/dashboard/posts/${postId}`);
+      } else {
+        toast.error(result.error || "Failed to update post");
+      }
+    } catch (error) {
+      console.error("Error updating post:", error);
+      toast.error("An unexpected error occurred while updating the post");
+    }
   };
 
   const handleCancel = () => {
