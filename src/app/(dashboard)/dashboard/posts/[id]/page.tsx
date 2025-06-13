@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getPost } from "@/app/actions/posts";
 import { BlogPost } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate, markdownToHtml, stripMarkdown } from "@/lib/utils";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
@@ -151,7 +151,7 @@ export default function PostViewPage() {
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-2">Excerpt</h3>
                   <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">
-                    {post.excerpt}
+                    {stripMarkdown(post.excerpt)}
                   </p>
                 </div>
               )}
@@ -160,7 +160,9 @@ export default function PostViewPage() {
                 <h3 className="text-lg font-medium mb-2">Content</h3>
                 <div
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
+                  dangerouslySetInnerHTML={{
+                    __html: markdownToHtml(post.content),
+                  }}
                 />
               </div>
             </CardContent>

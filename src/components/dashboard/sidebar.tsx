@@ -60,19 +60,23 @@ export function Sidebar({ onLogout }: SidebarProps) {
               className={cn(
                 "group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 transform hover:scale-105",
                 isActive
-                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
-                  : "text-gray-300 hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 hover:text-white hover:shadow-md"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg border border-blue-500/30"
+                  : "text-white hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600 hover:text-white hover:shadow-md hover:border hover:border-gray-500/30 [&>*]:text-white"
               )}
             >
               <item.icon
                 className={cn(
                   "mr-3 h-5 w-5 flex-shrink-0",
-                  isActive
-                    ? "text-white"
-                    : "text-gray-400 group-hover:text-white"
+                  isActive ? "text-white" : "text-white group-hover:text-white"
                 )}
+                style={{ color: "white" }}
               />
-              {item.name}
+              <span
+                style={{ color: "white" }}
+                className={isActive ? "text-white" : "text-white"}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}
@@ -92,7 +96,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
             <p className="text-sm font-semibold text-white truncate">
               {user?.role === "admin" ? "Admin User" : "User"}
             </p>
-            <p className="text-xs text-blue-300 font-medium truncate">
+            <p className="text-xs text-white font-medium truncate">
               {user?.email || "admin@example.com"}
             </p>
           </div>

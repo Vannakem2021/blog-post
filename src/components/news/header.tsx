@@ -11,12 +11,8 @@ import {
   XMarkIcon,
   MagnifyingGlassIcon,
   BellIcon,
-  ClockIcon,
-  UserIcon,
-  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/client";
 
 // Types for category data
@@ -43,7 +39,6 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, isAdmin, signOut } = useAuth();
   const searchParams = useSearchParams();
   const activeCategory = searchParams?.get("category");
 
@@ -114,12 +109,6 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
     fetchCategories();
   }, []);
 
-  const currentTime = new Date().toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -179,7 +168,7 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
                   className={cn(
                     "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
                     activeCategory === category.slug
-                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 !text-white shadow-lg"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-md"
                   )}
                 >
@@ -223,38 +212,7 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
               )}
             </div>
 
-            {/* Authentication */}
-            {user && isAdmin ? (
-              <div className="hidden sm:flex items-center space-x-3">
-                <Link href="/dashboard">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                  >
-                    Dashboard
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => signOut()}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <Link href="/auth/login" className="hidden sm:block">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                >
-                  Admin Login
-                </Button>
-              </Link>
-            )}
+            {/* Removed admin authentication elements for cleaner public navigation */}
 
             {/* Mobile menu button */}
             <Button
@@ -313,7 +271,7 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
                     className={cn(
                       "block p-4 rounded-xl text-sm font-medium transition-all duration-200",
                       activeCategory === category.slug
-                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700 !text-white shadow-lg"
                         : "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-800 hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 border border-gray-200 hover:border-blue-200"
                     )}
                     onClick={() => setMobileMenuOpen(false)}
@@ -324,14 +282,7 @@ export function NewsHeader({ hasBreakingNews = false }: NewsHeaderProps) {
               )}
             </div>
 
-            {/* Mobile Admin Link */}
-            <div className="pt-4 border-t border-gray-200">
-              <Link href="/dashboard" className="block">
-                <Button variant="outline" size="sm" className="w-full">
-                  Admin Dashboard
-                </Button>
-              </Link>
-            </div>
+            {/* Removed mobile admin link for cleaner public navigation */}
           </div>
         </div>
       </nav>

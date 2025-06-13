@@ -5,6 +5,7 @@ import { BlogPost } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { newsCategories } from "@/lib/mock-data";
+import { markdownToHtml, stripMarkdown } from "@/lib/utils";
 import {
   ShareIcon,
   ClockIcon,
@@ -160,7 +161,7 @@ export function PostContent({ post }: PostContentProps) {
 
         {post.excerpt && (
           <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-6 sm:mb-8 leading-relaxed max-w-4xl">
-            {post.excerpt}
+            {stripMarkdown(post.excerpt)}
           </p>
         )}
 
@@ -269,7 +270,7 @@ export function PostContent({ post }: PostContentProps) {
             prose-h2:text-xl sm:prose-h2:text-2xl lg:prose-h2:text-3xl prose-h2:mb-4 sm:prose-h2:mb-6 prose-h2:mt-6 sm:prose-h2:mt-10 prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2 sm:prose-h2:pb-3
             prose-h3:text-lg sm:prose-h3:text-xl lg:prose-h3:text-2xl prose-h3:mb-3 sm:prose-h3:mb-4 prose-h3:mt-6 sm:prose-h3:mt-8
             prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 sm:prose-p:mb-6
-            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-a:font-medium
+            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:text-blue-700 prose-a:font-medium
             prose-strong:text-gray-900 prose-strong:font-bold
             prose-em:text-gray-600 prose-em:italic
             prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:p-4 sm:prose-blockquote:p-6 prose-blockquote:rounded-r-lg prose-blockquote:my-6 sm:prose-blockquote:my-8
@@ -282,7 +283,7 @@ export function PostContent({ post }: PostContentProps) {
             prose-table:border-collapse prose-table:border prose-table:border-gray-300 prose-table:rounded-lg prose-table:overflow-hidden prose-table:text-sm sm:prose-table:text-base
             prose-th:bg-gray-50 prose-th:border prose-th:border-gray-300 prose-th:p-2 sm:prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:text-xs sm:prose-th:text-sm
             prose-td:border prose-td:border-gray-300 prose-td:p-2 sm:prose-td:p-3 prose-td:text-xs sm:prose-td:text-sm"
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{ __html: markdownToHtml(post.content) }}
         />
       </div>
 

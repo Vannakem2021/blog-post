@@ -158,15 +158,15 @@ body {
   outline-offset: 2px;
 }
 
-/* Ensure sufficient contrast for links */
-a {
+/* Ensure sufficient contrast for links - but not navigation links */
+a:not([class*="bg-gradient"]):not([class*="text-white"]) {
   color: var(--primary);
   text-decoration: none;
 }
 
-a:hover {
+a:not([class*="bg-gradient"]):not([class*="text-white"]):hover {
   color: var(--primary);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 a:focus-visible {

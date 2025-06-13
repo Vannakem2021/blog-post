@@ -64,10 +64,13 @@ export function SEOSection({
     }
   }, [title, primaryKeyword, slug, onSlugChange]);
 
-  // Auto-generate meta title if not set
+  // Auto-generate meta title if not set (truncate to 60 chars if needed)
   useEffect(() => {
     if (title && (!metaTitle || metaTitle === "")) {
-      onMetaTitleChange(title);
+      // Truncate title to 60 characters for meta title if it's too long
+      const truncatedTitle =
+        title.length > 60 ? title.substring(0, 57) + "..." : title;
+      onMetaTitleChange(truncatedTitle);
     }
   }, [title, metaTitle, onMetaTitleChange]);
 
@@ -83,7 +86,15 @@ export function SEOSection({
       primaryKeyword
     );
     setAnalysis(newAnalysis);
-  }, [title, content, metaTitle, metaDescription, slug, focusKeywords, primaryKeyword]);
+  }, [
+    title,
+    content,
+    metaTitle,
+    metaDescription,
+    slug,
+    focusKeywords,
+    primaryKeyword,
+  ]);
 
   const handleSlugChange = (newSlug: string) => {
     // Clean the slug
@@ -115,16 +126,25 @@ export function SEOSection({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-800">SEO Score</p>
-                <p className="text-2xl font-bold text-blue-900">{analysis.seo_score}/100</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {analysis.seo_score}/100
+                </p>
               </div>
-              <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center text-white font-bold",
-                analysis.seo_score >= 80 ? "bg-green-500" :
-                analysis.seo_score >= 60 ? "bg-yellow-500" :
-                "bg-red-500"
-              )}>
-                {analysis.seo_score >= 80 ? "A" :
-                 analysis.seo_score >= 60 ? "B" : "C"}
+              <div
+                className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center text-white font-bold",
+                  analysis.seo_score >= 80
+                    ? "bg-green-500"
+                    : analysis.seo_score >= 60
+                    ? "bg-yellow-500"
+                    : "bg-red-500"
+                )}
+              >
+                {analysis.seo_score >= 80
+                  ? "A"
+                  : analysis.seo_score >= 60
+                  ? "B"
+                  : "C"}
               </div>
             </div>
           </div>
@@ -133,14 +153,16 @@ export function SEOSection({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-800">Word Count</p>
-                <p className="text-2xl font-bold text-green-900">{analysis.word_count}</p>
+                <p className="text-2xl font-bold text-green-900">
+                  {analysis.word_count}
+                </p>
               </div>
-              <div className="text-green-600">
-                📝
-              </div>
+              <div className="text-green-600">📝</div>
             </div>
             <p className="text-xs text-green-700 mt-1">
-              {analysis.content_length_adequate ? "Good length" : "Consider adding more content"}
+              {analysis.content_length_adequate
+                ? "Good length"
+                : "Consider adding more content"}
             </p>
           </div>
 
@@ -148,14 +170,16 @@ export function SEOSection({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-purple-800">Keywords</p>
-                <p className="text-2xl font-bold text-purple-900">{focusKeywords.length}</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {focusKeywords.length}
+                </p>
               </div>
-              <div className="text-purple-600">
-                🎯
-              </div>
+              <div className="text-purple-600">🎯</div>
             </div>
             <p className="text-xs text-purple-700 mt-1">
-              {primaryKeyword ? `Primary: ${primaryKeyword}` : "No primary keyword"}
+              {primaryKeyword
+                ? `Primary: ${primaryKeyword}`
+                : "No primary keyword"}
             </p>
           </div>
         </div>
@@ -199,27 +223,39 @@ export function SEOSection({
         <div className="flex items-start space-x-3">
           <div className="text-2xl">💡</div>
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">SEO Tips</h4>
+            <h4 className="text-lg font-semibold text-gray-900 mb-2">
+              SEO Tips
+            </h4>
             <ul className="space-y-2 text-sm text-gray-700">
               <li className="flex items-start space-x-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Use your primary keyword naturally throughout the content</span>
+                <span>
+                  Use your primary keyword naturally throughout the content
+                </span>
               </li>
               <li className="flex items-start space-x-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Write compelling meta descriptions that encourage clicks</span>
+                <span>
+                  Write compelling meta descriptions that encourage clicks
+                </span>
               </li>
               <li className="flex items-start space-x-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Keep URLs short and descriptive with your target keyword</span>
+                <span>
+                  Keep URLs short and descriptive with your target keyword
+                </span>
               </li>
               <li className="flex items-start space-x-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Aim for at least 600 words for better search engine ranking</span>
+                <span>
+                  Aim for at least 600 words for better search engine ranking
+                </span>
               </li>
               <li className="flex items-start space-x-2">
                 <span className="text-blue-500 mt-1">•</span>
-                <span>Use headings (H2, H3) to structure your content logically</span>
+                <span>
+                  Use headings (H2, H3) to structure your content logically
+                </span>
               </li>
             </ul>
           </div>

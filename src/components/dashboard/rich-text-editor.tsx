@@ -332,7 +332,7 @@ export function RichTextEditor({
         // Links
         processedLine = processedLine.replace(
           /\[(.*?)\]\((.*?)\)/g,
-          '<a href="$2" class="text-blue-600 hover:underline">$1</a>'
+          '<a href="$2" class="text-blue-600 hover:text-blue-700">$1</a>'
         );
 
         elements.push(

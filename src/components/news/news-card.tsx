@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { truncateText } from "@/lib/utils";
+import { truncateText, stripMarkdown } from "@/lib/utils";
 import { BlogPost } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -144,7 +144,7 @@ export function NewsCard({
 
             {post.excerpt && (
               <p className="text-gray-600 text-sm line-clamp-2 mb-4 leading-relaxed">
-                {truncateText(post.excerpt, 100)}
+                {truncateText(stripMarkdown(post.excerpt), 100)}
               </p>
             )}
 
@@ -226,7 +226,7 @@ export function NewsCard({
 
             {post.excerpt && (
               <p className="text-gray-600 text-base line-clamp-3 mb-6 leading-relaxed">
-                {post.excerpt}
+                {stripMarkdown(post.excerpt)}
               </p>
             )}
 
@@ -396,7 +396,7 @@ export function NewsCard({
 
           {post.excerpt && (
             <p className="text-gray-600 text-sm line-clamp-3 mb-4 leading-relaxed flex-grow">
-              {truncateText(post.excerpt, 120)}
+              {truncateText(stripMarkdown(post.excerpt), 120)}
             </p>
           )}
 
