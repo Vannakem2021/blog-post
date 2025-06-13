@@ -113,14 +113,17 @@ export default function SettingsPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success("Settings saved successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save settings");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateSetting = (key: keyof SettingsData, value: any) => {
+  const updateSetting = (
+    key: keyof SettingsData,
+    value: string | number | boolean
+  ) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 

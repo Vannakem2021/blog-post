@@ -32,7 +32,7 @@ export default function NewPostPage() {
     try {
       const result = await createPost({
         ...data,
-        category: data.category as any, // Type assertion for NewsCategory
+        category: data.category || "technology", // Default to technology if not specified
       });
 
       if (result.success) {

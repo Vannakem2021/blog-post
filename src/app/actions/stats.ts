@@ -141,7 +141,7 @@ async function createActiveSessionsTable() {
     if (error && !error.message.includes("already exists")) {
       console.error("Error creating active_sessions table:", error);
     }
-  } catch (error) {
+  } catch {
     // Table creation will be handled by migration
     console.log("Active sessions table creation handled by migration");
   }

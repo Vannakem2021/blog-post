@@ -67,7 +67,8 @@ export async function getTrendingPosts({
       const shareCount = post.share_count || 0;
       const publishedAt = new Date(post.published_at || post.created_at);
       const now = new Date();
-      const hoursOld = (now.getTime() - publishedAt.getTime()) / (1000 * 60 * 60);
+      const hoursOld =
+        (now.getTime() - publishedAt.getTime()) / (1000 * 60 * 60);
 
       // Trending algorithm:
       // - Base score from views and shares (weighted)
@@ -78,7 +79,8 @@ export async function getTrendingPosts({
       const breakingBonus = post.is_breaking ? 1000 : 0;
       const featuredBonus = post.is_featured ? 500 : 0;
 
-      const trendingScore = (baseScore * recencyMultiplier) + breakingBonus + featuredBonus;
+      const trendingScore =
+        baseScore * recencyMultiplier + breakingBonus + featuredBonus;
 
       return {
         ...post,
@@ -101,7 +103,9 @@ export async function getTrendingPosts({
  * Get trending posts with caching for better performance
  * This function can be called from client components
  */
-export async function getTrendingPostsCached(options: TrendingPostsOptions = {}) {
+export async function getTrendingPostsCached(
+  options: TrendingPostsOptions = {}
+) {
   // For now, just call the main function
   // In the future, we could add Redis caching here
   return getTrendingPosts(options);

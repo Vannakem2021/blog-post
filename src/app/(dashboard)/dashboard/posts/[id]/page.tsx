@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Header } from "@/components/dashboard/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,14 +16,13 @@ import { toast } from "sonner";
 
 export default function PostViewPage() {
   const params = useParams();
-  const router = useRouter();
   const postId = params.id as string;
 
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch post data
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
       const result = await getPost(postId);
@@ -38,11 +38,11 @@ export default function PostViewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
   useEffect(() => {
     fetchPost();
-  }, [postId]);
+  }, [fetchPost]);
 
   if (loading) {
     return (
@@ -71,7 +71,7 @@ export default function PostViewPage() {
                 Post not found
               </h3>
               <p className="text-gray-500 mb-4">
-                The post you're looking for doesn't exist.
+                The post you&apos;re looking for doesn&apos;t exist.
               </p>
               <Link href="/dashboard/posts">
                 <Button>Back to Posts</Button>
@@ -135,9 +135,11 @@ export default function PostViewPage() {
                 </div>
                 {post.featured_image_url && (
                   <div className="ml-6 flex-shrink-0">
-                    <img
+                    <Image
                       src={post.featured_image_url}
                       alt={post.featured_image_alt || post.title}
+                      width={128}
+                      height={128}
                       className="w-32 h-32 object-cover rounded-lg"
                     />
                   </div>

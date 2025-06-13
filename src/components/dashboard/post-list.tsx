@@ -58,10 +58,14 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
                     className={`px-3 py-1 rounded-full font-semibold ${
                       post.status === "published"
                         ? "bg-green-100 text-green-700 border-green-200"
+                        : post.status === "scheduled"
+                        ? "bg-blue-100 text-blue-700 border-blue-200"
                         : "bg-yellow-100 text-yellow-700 border-yellow-200"
                     }`}
                   >
-                    {post.status === "published" ? "✅ Published" : "📝 Draft"}
+                    {post.status === "published" && "✅ Published"}
+                    {post.status === "scheduled" && "⏰ Scheduled"}
+                    {post.status === "draft" && "📝 Draft"}
                   </Badge>
                 </div>
                 {post.excerpt && (
@@ -78,6 +82,17 @@ export function PostList({ posts, onEdit, onDelete, onView }: PostListProps) {
                     <div className="flex items-center space-x-2">
                       <span className="text-green-600">🚀</span>
                       <span>Published: {formatDate(post.published_at)}</span>
+                    </div>
+                  )}
+                  {post.scheduled_at && post.status === "scheduled" && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-blue-600">⏰</span>
+                      <span>Scheduled: {formatDate(post.scheduled_at)}</span>
+                      {post.timezone && post.timezone !== "UTC" && (
+                        <span className="text-xs text-gray-400">
+                          ({post.timezone})
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

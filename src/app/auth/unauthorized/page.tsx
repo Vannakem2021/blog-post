@@ -1,7 +1,13 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 export default function UnauthorizedPage() {
   return (
@@ -15,15 +21,16 @@ export default function UnauthorizedPage() {
             Access Denied
           </CardTitle>
           <CardDescription>
-            You don't have permission to access this page. Admin privileges are required.
+            You don&apos;t have permission to access this page. Admin privileges
+            are required.
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <p className="text-sm text-gray-600">
             If you believe this is an error, please contact your administrator.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/" className="flex-1">
               <Button variant="outline" className="w-full">
@@ -31,13 +38,11 @@ export default function UnauthorizedPage() {
               </Button>
             </Link>
             <Link href="/auth/login" className="flex-1">
-              <Button className="w-full">
-                Try Different Account
-              </Button>
+              <Button className="w-full">Try Different Account</Button>
             </Link>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

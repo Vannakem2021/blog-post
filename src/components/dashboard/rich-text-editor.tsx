@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,6 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const [isPreview, setIsPreview] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isRichMode, setIsRichMode] = useState(false);
 
   // Convert HTML to Markdown
   const htmlToMarkdown = useCallback((html: string): string => {

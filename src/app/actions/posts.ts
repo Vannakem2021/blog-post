@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateSlug } from "@/lib/utils";
-import { BlogPost, NewsCategory } from "@/lib/types";
+import { NewsCategory } from "@/lib/types";
 
 // Validation schemas
 interface CreatePostInput {
@@ -14,12 +13,21 @@ interface CreatePostInput {
   featured_image_url?: string;
   featured_image_alt?: string;
   category: NewsCategory;
-  status: "draft" | "published";
+  status: "draft" | "published" | "scheduled"; // Updated to include 'scheduled'
+  scheduled_at?: Date | string; // New: When to publish the post
+  timezone?: string; // New: Timezone for scheduling
+  auto_publish?: boolean; // New: Auto-publish when scheduled time arrives
   urgency_level?: "breaking" | "urgent" | "normal";
   is_breaking?: boolean;
   is_featured?: boolean;
   reading_time?: number;
   source_attribution?: string[];
+  // SEO fields
+  meta_title?: string;
+  meta_description?: string;
+  focus_keywords?: string[];
+  primary_keyword?: string;
+  is_pillar_content?: boolean;
 }
 
 interface UpdatePostInput extends CreatePostInput {
@@ -60,6 +68,43 @@ async function validateAdminAccess() {
   return { user, profile };
 }
 
+// Helper function to validate scheduled post data
+function validateScheduledPost(input: CreatePostInput | UpdatePostInput) {
+  if (input.status === "scheduled") {
+    if (!input.scheduled_at) {
+      throw new Error("Scheduled date/time is required for scheduled posts");
+    }
+
+    const scheduledDate = new Date(input.scheduled_at);
+    const now = new Date();
+
+    if (isNaN(scheduledDate.getTime())) {
+      throw new Error("Invalid scheduled date format");
+    }
+
+    if (scheduledDate <= now) {
+      throw new Error("Scheduled date must be in the future");
+    }
+
+    // Prevent scheduling too far in advance (optional - 1 year limit)
+    const maxFutureDate = new Date();
+    maxFutureDate.setFullYear(maxFutureDate.getFullYear() + 1);
+
+    if (scheduledDate > maxFutureDate) {
+      throw new Error("Cannot schedule more than 1 year in advance");
+    }
+
+    // Validate timezone if provided
+    if (input.timezone) {
+      try {
+        Intl.DateTimeFormat(undefined, { timeZone: input.timezone });
+      } catch {
+        throw new Error("Invalid timezone specified");
+      }
+    }
+  }
+}
+
 // Create a new blog post
 export async function createPost(input: CreatePostInput) {
   try {
@@ -81,6 +126,9 @@ export async function createPost(input: CreatePostInput) {
     if (!input.category) {
       throw new Error("Category is required");
     }
+
+    // Validate scheduled post data
+    validateScheduledPost(input);
 
     // Generate slug from title
     const baseSlug = generateSlug(input.title);
@@ -121,6 +169,18 @@ export async function createPost(input: CreatePostInput) {
       reading_time: readingTime,
       source_attribution: input.source_attribution || null,
       author_id: user.id,
+      // Scheduled post fields
+      scheduled_at: input.status === "scheduled" ? input.scheduled_at : null,
+      timezone: input.timezone || "Asia/Phnom_Penh",
+      auto_publish:
+        input.status === "scheduled" ? input.auto_publish ?? true : false,
+      // SEO fields
+      meta_title: input.meta_title?.trim() || null,
+      meta_description: input.meta_description?.trim() || null,
+      focus_keywords: input.focus_keywords || null,
+      primary_keyword: input.primary_keyword?.trim() || null,
+      is_pillar_content: input.is_pillar_content || false,
+      // Published at logic
       published_at:
         input.status === "published" ? new Date().toISOString() : null,
     };
@@ -162,7 +222,7 @@ export async function createPost(input: CreatePostInput) {
 // Update an existing blog post
 export async function updatePost(input: UpdatePostInput) {
   try {
-    const { user } = await validateAdminAccess();
+    await validateAdminAccess();
     const supabase = await createClient();
 
     // Validate required fields
@@ -177,6 +237,9 @@ export async function updatePost(input: UpdatePostInput) {
     if (!input.content?.trim()) {
       throw new Error("Content is required");
     }
+
+    // Validate scheduled post data
+    validateScheduledPost(input);
 
     // Check if post exists and user has permission
     const { data: existingPost, error: fetchError } = await supabase
@@ -207,10 +270,36 @@ export async function updatePost(input: UpdatePostInput) {
       is_featured: input.is_featured || false,
       reading_time: readingTime,
       source_attribution: input.source_attribution || null,
-      published_at:
-        input.status === "published" && existingPost.status === "draft"
-          ? new Date().toISOString()
-          : existingPost.published_at,
+      // Scheduled post fields
+      scheduled_at: input.status === "scheduled" ? input.scheduled_at : null,
+      timezone: input.timezone || existingPost.timezone || "Asia/Phnom_Penh",
+      auto_publish:
+        input.status === "scheduled" ? input.auto_publish ?? true : false,
+      // SEO fields
+      meta_title: input.meta_title?.trim() || null,
+      meta_description: input.meta_description?.trim() || null,
+      focus_keywords: input.focus_keywords || null,
+      primary_keyword: input.primary_keyword?.trim() || null,
+      is_pillar_content: input.is_pillar_content || false,
+      // Published at logic - handle transitions between statuses
+      published_at: (() => {
+        // If changing from draft/scheduled to published, set published_at to now
+        if (
+          input.status === "published" &&
+          existingPost.status !== "published"
+        ) {
+          return new Date().toISOString();
+        }
+        // If changing from published to draft/scheduled, clear published_at
+        if (
+          input.status !== "published" &&
+          existingPost.status === "published"
+        ) {
+          return null;
+        }
+        // Otherwise, keep existing published_at
+        return existingPost.published_at;
+      })(),
     };
 
     // Update the post
@@ -333,7 +422,7 @@ export async function getPost(id: string) {
 export async function getPosts(
   page = 1,
   limit = 10,
-  status?: "draft" | "published"
+  status?: "draft" | "published" | "scheduled"
 ) {
   try {
     const supabase = await createClient();
@@ -347,7 +436,8 @@ export async function getPosts(
           full_name,
           email
         )
-      `
+      `,
+        { count: "exact" }
       )
       .order("created_at", { ascending: false });
 
@@ -382,6 +472,381 @@ export async function getPosts(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to fetch posts",
+    };
+  }
+}
+
+// Get posts by status with pagination and category filter
+export async function getPostsByStatus(
+  status: "draft" | "published" | "scheduled",
+  page = 1,
+  limit = 10,
+  category?: string
+) {
+  try {
+    await validateAdminAccess();
+    const supabase = await createClient();
+
+    let query = supabase
+      .from("posts")
+      .select(
+        `
+        *,
+        profiles:author_id (
+          full_name,
+          email
+        )
+      `,
+        { count: "exact" }
+      )
+      .eq("status", status);
+
+    // Add category filter if provided
+    if (category && category !== "all") {
+      query = query.eq("category", category);
+    }
+
+    // Order by different fields based on status
+    if (status === "scheduled") {
+      query = query.order("scheduled_at", { ascending: true });
+    } else {
+      query = query.order("created_at", { ascending: false });
+    }
+
+    const {
+      data: posts,
+      error,
+      count,
+    } = await query.range((page - 1) * limit, page * limit - 1);
+
+    if (error) {
+      throw new Error(`Failed to fetch ${status} posts`);
+    }
+
+    return {
+      success: true,
+      data: {
+        posts: posts || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      },
+    };
+  } catch (error) {
+    console.error(`Get ${status} posts error:`, error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : `Failed to fetch ${status} posts`,
+    };
+  }
+}
+
+// Get post counts by status
+export async function getPostCounts() {
+  try {
+    await validateAdminAccess();
+    const supabase = await createClient();
+
+    // Get counts for each status
+    const [publishedResult, draftResult, scheduledResult] = await Promise.all([
+      supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "published"),
+      supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "draft"),
+      supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "scheduled"),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        published: publishedResult.count || 0,
+        draft: draftResult.count || 0,
+        scheduled: scheduledResult.count || 0,
+        total:
+          (publishedResult.count || 0) +
+          (draftResult.count || 0) +
+          (scheduledResult.count || 0),
+      },
+    };
+  } catch (error) {
+    console.error("Get post counts error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to fetch post counts",
+    };
+  }
+}
+
+// Get scheduled posts specifically
+export async function getScheduledPosts(page = 1, limit = 10) {
+  try {
+    await validateAdminAccess();
+    const supabase = await createClient();
+
+    const {
+      data: posts,
+      error,
+      count,
+    } = await supabase
+      .from("posts")
+      .select(
+        `
+        *,
+        profiles:author_id (
+          full_name,
+          email
+        )
+      `,
+        { count: "exact" }
+      )
+      .eq("status", "scheduled")
+      .order("scheduled_at", { ascending: true })
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (error) {
+      throw new Error("Failed to fetch scheduled posts");
+    }
+
+    return {
+      success: true,
+      data: {
+        posts: posts || [],
+        pagination: {
+          page,
+          limit,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limit),
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Get scheduled posts error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch scheduled posts",
+    };
+  }
+}
+
+// Cancel a scheduled post (change status back to draft)
+export async function cancelScheduledPost(postId: string) {
+  try {
+    await validateAdminAccess();
+    const supabase = await createClient();
+
+    if (!postId) {
+      throw new Error("Post ID is required");
+    }
+
+    // Check if post exists and is scheduled
+    const { data: existingPost, error: fetchError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+
+    if (fetchError || !existingPost) {
+      throw new Error("Post not found");
+    }
+
+    if (existingPost.status !== "scheduled") {
+      throw new Error("Post is not scheduled");
+    }
+
+    // Update post to draft status and clear scheduling fields
+    const { data: post, error } = await supabase
+      .from("posts")
+      .update({
+        status: "draft",
+        scheduled_at: null,
+        auto_publish: false,
+      })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Database error:", error);
+      throw new Error("Failed to cancel scheduled post");
+    }
+
+    // Revalidate relevant pages
+    revalidatePath("/dashboard/posts");
+    revalidatePath("/dashboard/scheduled");
+
+    return {
+      success: true,
+      data: post,
+      message: "Scheduled post cancelled successfully",
+    };
+  } catch (error) {
+    console.error("Cancel scheduled post error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel scheduled post",
+    };
+  }
+}
+
+// Reschedule a post to a new date/time
+export async function reschedulePost(
+  postId: string,
+  newScheduledAt: string,
+  timezone?: string
+) {
+  try {
+    await validateAdminAccess();
+    const supabase = await createClient();
+
+    if (!postId) {
+      throw new Error("Post ID is required");
+    }
+
+    if (!newScheduledAt) {
+      throw new Error("New scheduled date is required");
+    }
+
+    // Validate the new scheduled date
+    const scheduledDate = new Date(newScheduledAt);
+    const now = new Date();
+
+    if (isNaN(scheduledDate.getTime())) {
+      throw new Error("Invalid scheduled date format");
+    }
+
+    if (scheduledDate <= now) {
+      throw new Error("Scheduled date must be in the future");
+    }
+
+    // Check if post exists and is scheduled
+    const { data: existingPost, error: fetchError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+
+    if (fetchError || !existingPost) {
+      throw new Error("Post not found");
+    }
+
+    if (existingPost.status !== "scheduled") {
+      throw new Error("Post is not scheduled");
+    }
+
+    // Update the scheduled time
+    const { data: post, error } = await supabase
+      .from("posts")
+      .update({
+        scheduled_at: newScheduledAt,
+        timezone: timezone || existingPost.timezone || "Asia/Phnom_Penh",
+      })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Database error:", error);
+      throw new Error("Failed to reschedule post");
+    }
+
+    // Revalidate relevant pages
+    revalidatePath("/dashboard/posts");
+    revalidatePath("/dashboard/scheduled");
+
+    return {
+      success: true,
+      data: post,
+      message: "Post rescheduled successfully",
+    };
+  } catch (error) {
+    console.error("Reschedule post error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to reschedule post",
+    };
+  }
+}
+
+// Publish a scheduled post immediately
+export async function publishScheduledPostNow(postId: string) {
+  try {
+    await validateAdminAccess();
+    const supabase = await createClient();
+
+    if (!postId) {
+      throw new Error("Post ID is required");
+    }
+
+    // Check if post exists and is scheduled
+    const { data: existingPost, error: fetchError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+
+    if (fetchError || !existingPost) {
+      throw new Error("Post not found");
+    }
+
+    if (existingPost.status !== "scheduled") {
+      throw new Error("Post is not scheduled");
+    }
+
+    // Update post to published status
+    const { data: post, error } = await supabase
+      .from("posts")
+      .update({
+        status: "published",
+        published_at: new Date().toISOString(),
+        scheduled_at: null,
+        auto_publish: false,
+      })
+      .eq("id", postId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Database error:", error);
+      throw new Error("Failed to publish post");
+    }
+
+    // Revalidate relevant pages
+    revalidatePath("/dashboard/posts");
+    revalidatePath("/dashboard/scheduled");
+    revalidatePath("/");
+    revalidatePath("/blog");
+
+    return {
+      success: true,
+      data: post,
+      message: "Post published successfully",
+    };
+  } catch (error) {
+    console.error("Publish scheduled post error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to publish post",
     };
   }
 }

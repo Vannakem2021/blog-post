@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/dashboard/header";
 import { PostForm } from "@/components/dashboard/post-form";
@@ -20,7 +20,7 @@ export default function EditPostPage() {
   const [loading, setLoading] = useState(true);
 
   // Fetch post data
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
       const result = await getPost(postId);
@@ -36,11 +36,11 @@ export default function EditPostPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
   useEffect(() => {
     fetchPost();
-  }, [postId]);
+  }, [fetchPost]);
 
   const handleSubmit = async (data: CreatePostData) => {
     try {
@@ -89,7 +89,7 @@ export default function EditPostPage() {
                 Post not found
               </h3>
               <p className="text-gray-500 mb-4">
-                The post you're trying to edit doesn't exist.
+                The post you&apos;re trying to edit doesn&apos;t exist.
               </p>
               <Link href="/dashboard/posts">
                 <Button>Back to Posts</Button>
